@@ -1,0 +1,20 @@
+Changed database context to 'DynamicFormDb'.
+
+(1 rows affected)
+
+(1 rows affected)
+
+(1 rows affected)
+
+(6 rows affected)
+
+(3 rows affected)
+
+(5 rows affected)
+
+(1 rows affected)
+Sample data inserted successfully!
+Form Code: PHIEU_KHAM
+Version: 1.0.0
+Form ID: DD57DF19-0DEA-4C86-BBEF-A6530C52C1B3
+Version ID: F174E353-85F0-4012-A99B-2CE9FF9A0D22

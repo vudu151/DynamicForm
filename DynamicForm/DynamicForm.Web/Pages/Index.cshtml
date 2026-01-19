@@ -1,0 +1,31 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Hệ thống Dynamic Form</h1>
+    <p class="lead">Hệ thống quản lý form động cho HIS (Hospital Information System)</p>
+    <hr />
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Danh sách Form</h5>
+                    <p class="card-text">Xem và điền các form có sẵn trong hệ thống</p>
+                    <a href="/Forms" class="btn btn-primary">Xem danh sách</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">API Documentation</h5>
+                    <p class="card-text">Xem tài liệu API tại Swagger UI</p>
+                    <a href="https://localhost:7000/swagger" target="_blank" class="btn btn-secondary">Mở Swagger</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

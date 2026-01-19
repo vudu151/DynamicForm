@@ -1,0 +1,33 @@
+.vs/
+.vscode/
+.idea/
+
+# Build outputs
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# User-specific / VS artifacts
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.nupkg
+*.snupkg
+*.log
+
+# OS / tooling
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Custom workspace artifacts
+.build-out/
+
+# Local secrets (keep out of git)
+.env
+.env.*
+secrets.json

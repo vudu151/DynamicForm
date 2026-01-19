@@ -1,0 +1,166 @@
+@page
+@model DynamicForm.Web.Pages.Forms.FillModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = Model.Metadata?.Form.Name ?? "Điền Form";
+}
+
+<div class="container mt-4">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (Model.Metadata != null)
+    {
+        <h2>@Model.Metadata.Form.Name</h2>
+        @if (!string.IsNullOrEmpty(Model.Metadata.Form.Description))
+        {
+            <p class="text-muted">@Model.Metadata.Form.Description</p>
+        }
+
+        <form method="post" id="dynamicForm">
+            <input type="hidden" name="Code" value="@Model.Code" />
+            <input type="hidden" name="FormVersionId" value="@Model.FormVersionId" />
+            <div class="row">
+                @foreach (var field in Model.Metadata.Fields.Where(f => f.IsVisible).OrderBy(f => f.DisplayOrder))
+                {
+                    <div class="@Model.GetFieldContainerCss(field)">
+                        <label for="@field.FieldCode" class="form-label">
+                            @field.Label
+                            @if (field.IsRequired)
+                            {
+                                <span class="text-danger">*</span>
+                            }
+                        </label>
+
+                        @switch (field.FieldType)
+                        {
+                            case 1: // Text
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="@field.FieldCode" 
+                                       name="FormData[@field.FieldCode]" 
+                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                       placeholder="@field.Placeholder"
+                                       @(field.IsRequired ? "required" : "") />
+                                break;
+
+                            case 2: // Number
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="@field.FieldCode" 
+                                       name="FormData[@field.FieldCode]" 
+                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                       placeholder="@field.Placeholder"
+                                       @(field.IsRequired ? "required" : "") />
+                                break;
+
+                            case 3: // Date
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="@field.FieldCode" 
+                                       name="FormData[@field.FieldCode]" 
+                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                       @(field.IsRequired ? "required" : "") />
+                                break;
+
+                            case 6: // Select
+                                <select class="form-select" 
+                                        id="@field.FieldCode" 
+                                        name="FormData[@field.FieldCode]"
+                                        @(field.IsRequired ? "required" : "")>
+                                    <option value="">-- Chọn --</option>
+                                    @{
+                                        var hasValue = Model.FormData.ContainsKey(field.FieldCode) && Model.FormData[field.FieldCode] != null;
+                                        var selectedValue = hasValue ? Model.FormData[field.FieldCode] : null;
+                                    }
+                                    @foreach (var option in field.Options.OrderBy(o => o.DisplayOrder).ThenBy(o => o.Label))
+                                    {
+                                        var isSelected = hasValue
+                                            ? selectedValue == option.Value
+                                            : option.IsDefault;
+                                        <option value="@option.Value" selected="@isSelected">
+                                            @option.Label
+                                        </option>
+                                    }
+                                </select>
+                                break;
+
+                            case 10: // TextArea
+                                <textarea class="form-control" 
+                                          id="@field.FieldCode" 
+                                          name="FormData[@field.FieldCode]" 
+                                          rows="3"
+                                          placeholder="@field.Placeholder"
+                                          @(field.IsRequired ? "required" : "")>@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)</textarea>
+                                break;
+
+                            default:
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="@field.FieldCode" 
+                                       name="FormData[@field.FieldCode]" 
+                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                       placeholder="@field.Placeholder"
+                                       @(field.IsRequired ? "required" : "") />
+                                break;
+                        }
+
+                        @if (!string.IsNullOrEmpty(field.HelpText))
+                        {
+                            <small class="form-text text-muted">@field.HelpText</small>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Lưu Form</button>
+                <a href="/Forms" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+
+        @if (TempData["ErrorDetails"] != null)
+        {
+            <div class="alert alert-warning mt-3">
+                Có lỗi khi gọi API. Mở DevTools (F12) để xem chi tiết trong Console.
+            </div>
+            <script>
+                console.error("Save form failed (server details):\n" + @Html.Raw(JsonSerializer.Serialize(TempData["ErrorDetails"]?.ToString())));
+            </script>
+        }
+
+        <script>
+            (function () {
+                const form = document.getElementById("dynamicForm");
+                if (!form) return;
+                form.addEventListener("submit", function () {
+                    try {
+                        const fd = new FormData(form);
+                        const payload = { code: fd.get("Code"), formVersionId: fd.get("FormVersionId"), data: {} };
+                        for (const [k, v] of fd.entries()) {
+                            if (k.startsWith("FormData[") && k.endsWith("]")) {
+                                const fieldCode = k.substring("FormData[".length, k.length - 1);
+                                payload.data[fieldCode] = v;
+                            }
+                        }
+                        console.log("Submitting form payload:", payload);
+                    } catch (e) {
+                        console.error("Failed to log submit payload", e);
+                    }
+                });
+            })();
+        </script>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Không tìm thấy form. <a href="/Forms">Quay lại danh sách</a>
+        </div>
+    }
+</div>

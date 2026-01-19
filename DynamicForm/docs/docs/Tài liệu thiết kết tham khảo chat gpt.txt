@@ -1,0 +1,255 @@
+Đề tài của tôi và tôi tham khảo ý kiến của chatGPT
+Thiết kế hệ thống Dynamic Form cho HIS
+Yêu cầu:
+
+Mô hình metadata form
+
+Cách render UI
+
+Validation động
+
+Versioning form
+
+Dưới đây là phân tích đầy đủ cả về nghiệp vụ lẫn kỹ thuật, đúng theo góc nhìn mà hội đồng chấm đang kỳ vọng (Tech Lead / Architect mindset).
+
+I. PHÂN TÍCH NGHIỆP VỤ (Business Analysis)
+1. Bài toán nghiệp vụ cốt lõi
+
+Trong HIS (Hospital Information System):
+
+Biểu mẫu y tế rất nhiều, thay đổi liên tục
+
+Phiếu khám
+
+Phiếu chăm sóc
+
+Bệnh án
+
+Phiếu xét nghiệm
+
+Mỗi:
+
+Khoa khác nhau
+
+Tuyến khác nhau
+
+Bộ Y tế ban hành CV mới
+→ Không thể hard-code form
+
+👉 Dynamic Form nhằm giải quyết:
+
+Tạo / sửa / cấu hình form không cần deploy lại
+
+Thích ứng nhanh với thay đổi nghiệp vụ y tế
+
+Chuẩn hóa dữ liệu đầu vào
+
+2. Các pain point hiện tại (bắt buộc phải nêu)
+
+Bạn nên chỉ ra rõ vấn đề nếu KHÔNG có Dynamic Form:
+
+Vấn đề	Hệ quả
+Form hard-code	Mỗi thay đổi phải sửa code
+Không version	Dữ liệu cũ – mới lẫn lộn
+Validation cứng	Không phù hợp từng khoa
+Không tái sử dụng	Trùng lặp form
+Không audit	Không biết ai sửa form
+
+👉 Hội đồng rất thích khi bạn nêu rõ vấn đề hiện tại.
+
+3. Các đối tượng nghiệp vụ chính
+
+Form: 1 biểu mẫu nghiệp vụ
+
+Field: trường dữ liệu (text, number, select…)
+
+Validation Rule: luật kiểm tra dữ liệu
+
+Form Version: phiên bản theo thời gian
+
+Form Instance (Data): dữ liệu người dùng nhập
+
+🔑 Tách Form definition và Form data là mấu chốt tư duy kiến trúc.
+
+II. THIẾT KẾ KỸ THUẬT (System Design)
+1. Mô hình Metadata Form (Core phần chấm điểm cao)
+1.1 Các bảng / entity chính (ERD tư duy)
+FORM
+- Id
+- Code
+- Name
+- Status
+- CurrentVersionId
+
+FORM_VERSION
+- Id
+- FormId
+- Version
+- CreatedDate
+- IsActive
+
+FORM_FIELD
+- Id
+- FormVersionId
+- FieldCode
+- FieldType
+- Label
+- Order
+- IsRequired
+
+FIELD_VALIDATION
+- Id
+- FieldId
+- RuleType
+- RuleValue
+- ErrorMessage
+
+FORM_DATA
+- Id
+- FormVersionId
+- ObjectId (BenhAnId, PhieuId…)
+- DataJson
+
+
+👉 Điểm cộng:
+
+Metadata-driven
+
+Không phụ thuộc nghiệp vụ cụ thể
+
+2. Render UI động (Frontend / UI Layer)
+2.1 Luồng render
+User mở form
+→ Load Form + Version
+→ Load Field metadata
+→ FE render theo FieldType
+→ Bind validation
+
+2.2 Cách render (ví dụ)
+FieldType	UI
+Text	Input
+Number	Input number
+Date	DatePicker
+Select	Dropdown
+Checkbox	Checkbox
+Repeater	Dynamic list
+
+FE chỉ biết metadata, không biết nghiệp vụ y tế.
+
+👉 Điểm cộng lớn:
+
+Backend quyết định logic – Frontend chỉ render
+
+3. Validation động (Rất quan trọng)
+3.1 Các loại validation
+
+Required
+
+Min / Max
+
+Regex
+
+Range (sinh lý)
+
+Conditional (field A → field B)
+
+3.2 Validation 2 tầng (điểm cộng)
+Tầng	Mục đích
+Client-side	UX tốt
+Server-side	An toàn dữ liệu
+{
+  "rule": "range",
+  "min": 60,
+  "max": 100,
+  "message": "Chỉ số ngoài ngưỡng cho phép"
+}
+
+
+👉 Validation cũng là metadata, không hard-code.
+
+4. Versioning Form (Phần phân loại Senior vs Architect)
+4.1 Vì sao cần versioning?
+
+Bệnh án 2024 ≠ bệnh án 2025
+
+Không được phá dữ liệu cũ
+
+Phục vụ pháp lý, kiểm tra sau này
+
+4.2 Chiến lược versioning
+Nguyên tắc	Mô tả
+Immutable	Version cũ không sửa
+New version	Copy + chỉnh
+Data gắn version	FORM_DATA → FORM_VERSION
+
+Khi mở hồ sơ cũ → render theo version cũ.
+
+5. API / Service Design (Nên nêu)
+GET /forms/{code}
+GET /forms/{id}/versions
+GET /forms/{versionId}/fields
+POST /form-data
+GET /form-data/{objectId}
+
+
+👉 REST hoặc GraphQL đều được, miễn logic rõ.
+
+III. KHẢ NĂNG MỞ RỘNG & BẢO TRÌ (20%)
+1. Mở rộng dễ dàng
+
+Thêm field mới → không sửa code
+
+Thêm validation → thêm rule
+
+Thêm form mới → cấu hình
+
+2. Tích hợp hệ thống khác
+
+HIS
+
+LIS
+
+PACS
+
+Mobile App
+
+→ Form metadata dùng chung
+
+IV. ĐÁNH GIÁ NĂNG LỰC CỦA BẠN (Theo đề)
+
+Nếu bạn trình bày được các ý trên:
+
+✅ Bạn đang thể hiện:
+
+Tư duy System Design
+
+Hiểu sâu nghiệp vụ y tế
+
+Không chỉ là coder
+
+👉 Xếp loại dự kiến:
+
+85+ điểm
+
+Level: Tech Lead / Architect tiềm năng
+
+V. GỢI Ý CẤU TRÚC BÀI LÀM (RẤT QUAN TRỌNG)
+
+Bạn nên làm theo bố cục này:
+
+Giới thiệu & bài toán
+
+Vấn đề hiện tại
+
+Mục tiêu hệ thống
+
+Thiết kế metadata
+
+Render UI
+
+Validation
+
+Versioning
+
+Khả năng mở rộng
+
