@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicForm.API", "DynamicF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicForm.Web", "DynamicForm.Web\DynamicForm.Web.csproj", "{CF2B139E-513C-42B3-9CD3-46D014D121D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicForm.Mobile", "DynamicForm.Mobile\DynamicForm.Mobile.csproj", "{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{CF2B139E-513C-42B3-9CD3-46D014D121D7}.Release|x64.Build.0 = Release|Any CPU
 		{CF2B139E-513C-42B3-9CD3-46D014D121D7}.Release|x86.ActiveCfg = Release|Any CPU
 		{CF2B139E-513C-42B3-9CD3-46D014D121D7}.Release|x86.Build.0 = Release|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Debug|x64.Build.0 = Debug|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Debug|x86.Build.0 = Debug|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Release|x64.ActiveCfg = Release|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Release|x64.Build.0 = Release|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Release|x86.ActiveCfg = Release|Any CPU
+		{4E0C7915-1CD8-4C24-AE8A-B0504C39FEAB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

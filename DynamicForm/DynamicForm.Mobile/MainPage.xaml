@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DynamicForm.Mobile.MainPage"
+             Title="DynamicForm Mobile">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <!-- Thông tin chung -->
+            <Label Text="Mã Form (Code)" FontAttributes="Bold" />
+            <Entry Text="{Binding FormCode}" Placeholder="VD: PHIEU_KHAM" />
+
+            <Label Text="ObjectId" FontAttributes="Bold" />
+            <Entry Text="{Binding ObjectId}" Placeholder="VD: PATIENT-001" />
+
+            <Label Text="ObjectType" FontAttributes="Bold" />
+            <Entry Text="{Binding ObjectType}" Placeholder="VD: PHIEU_KHAM" />
+
+            <Button Text="Tải metadata" 
+                    Command="{Binding LoadFormCommand}"/>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+            <BoxView HeightRequest="1" Color="Gray" />
+
+            <!-- Khu vực render field động -->
+            <StackLayout x:Name="FormLayout" Spacing="12" />
+
+            <Button Text="Submit"
+                    Clicked="OnSubmitClicked"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

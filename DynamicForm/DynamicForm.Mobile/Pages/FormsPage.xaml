@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DynamicForm.Mobile.FormsPage"
+             Title="Forms">
+
+    <StackLayout Padding="20">
+        <Button Text="Tải danh sách" 
+                Command="{Binding LoadFormsCommand}" />
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+        <CollectionView ItemsSource="{Binding Forms}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedForm}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Label Text="{Binding Code}"
+                               FontAttributes="Bold" />
+                        <Label Text="{Binding Name}"
+                               Grid.Row="1"
+                               FontSize="12"
+                               TextColor="Gray" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </StackLayout>
+</ContentPage>
