@@ -103,6 +103,37 @@ body {
   pointer-events: none;
 }
 
+/* Scroll cho preview area khi có hơn 4 trường */
+#fieldsList {
+  max-height: calc(4 * 120px); /* ~4 items x 120px mỗi item */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Smooth scroll */
+#fieldsList {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar cho preview area */
+#fieldsList::-webkit-scrollbar {
+  width: 8px;
+}
+
+#fieldsList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+#fieldsList::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+#fieldsList::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
