@@ -7,7 +7,7 @@ builder.Services.AddScoped<DynamicForm.Web.Services.ApiService>();
 // Add HttpClient for API calls
 builder.Services.AddHttpClient("ApiClient", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7220");
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5144");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 

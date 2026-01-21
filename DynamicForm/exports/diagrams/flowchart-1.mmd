@@ -1,0 +1,69 @@
+﻿graph TB
+    subgraph "BUSINESS ACTORS"
+        ADMIN[Quáº£n trá»‹ viÃªn<br/>- Táº¡o/sá»­a form<br/>- Quáº£n lÃ½ version<br/>- PhÃ¢n quyá»n<br/>- Thiáº¿t káº¿ metadata]
+        DOCTOR[BÃ¡c sÄ©<br/>- KhÃ¡m bá»‡nh<br/>- Äiá»n phiáº¿u khÃ¡m<br/>- Xem bá»‡nh Ã¡n<br/>- Mobile/Web]
+        NURSE[Äiá»u dÆ°á»¡ng<br/>- ChÄƒm sÃ³c<br/>- Äiá»n phiáº¿u chÄƒm sÃ³c<br/>- Theo dÃµi<br/>- Mobile/Web]
+        LAB_TECH[Ká»¹ thuáº­t viÃªn<br/>- XÃ©t nghiá»‡m<br/>- Äiá»n phiáº¿u xÃ©t nghiá»‡m<br/>- Mobile/Web]
+        ADMIN_STAFF[NhÃ¢n viÃªn hÃ nh chÃ­nh<br/>- Quáº£n lÃ½ há»“ sÆ¡<br/>- BÃ¡o cÃ¡o<br/>- Export dá»¯ liá»‡u]
+    end
+    
+    subgraph "ACCESS CHANNELS"
+        WEB[Web Application<br/>- Razor Pages<br/>- Desktop/Tablet<br/>- Full features]
+        MOBILE[Mobile App<br/>- Android/iOS<br/>- Offline capable<br/>- Field work]
+    end
+    
+    subgraph "BUSINESS PROCESSES"
+        FORM_DESIGN[Thiáº¿t káº¿ Form<br/>- Äá»‹nh nghÄ©a metadata<br/>- Cáº¥u hÃ¬nh field<br/>- Thiáº¿t láº­p validation]
+        FORM_VERSIONING[Quáº£n lÃ½ Version<br/>- Táº¡o version má»›i<br/>- Duyá»‡t version<br/>- KÃ­ch hoáº¡t version]
+        FORM_FILLING[Äiá»n Form<br/>- Load form theo version<br/>- Nháº­p dá»¯ liá»‡u<br/>- Validate dá»¯ liá»‡u]
+        FORM_REVIEW[Xem/In Form<br/>- Xem dá»¯ liá»‡u cÅ©<br/>- In bÃ¡o cÃ¡o<br/>- Export dá»¯ liá»‡u]
+    end
+    
+    subgraph "BUSINESS ENTITIES"
+        FORM_ENTITY[Form<br/>- Phiáº¿u khÃ¡m<br/>- Phiáº¿u chÄƒm sÃ³c<br/>- Bá»‡nh Ã¡n<br/>- Phiáº¿u xÃ©t nghiá»‡m]
+        FIELD_ENTITY[Field<br/>- Text, Number<br/>- Date, Select<br/>- Checkbox, Repeater]
+        VALIDATION_ENTITY[Validation Rule<br/>- Required<br/>- Range<br/>- Conditional]
+        DATA_ENTITY[Form Data<br/>- Dá»¯ liá»‡u Ä‘Ã£ Ä‘iá»n<br/>- Gáº¯n vá»›i version<br/>- Audit trail]
+    end
+    
+    subgraph "BUSINESS RULES"
+        RULE_VERSION[Versioning Rule<br/>- Immutable version<br/>- Data gáº¯n version<br/>- KhÃ´ng sá»­a version cÅ©]
+        RULE_VALIDATION[Validation Rule<br/>- Client + Server<br/>- Conditional logic<br/>- Range sinh lÃ½]
+        RULE_PERMISSION[Permission Rule<br/>- Role-based access<br/>- Form-level permission<br/>- Field-level permission]
+        RULE_AUDIT[Audit Rule<br/>- Log má»i thay Ä‘á»•i<br/>- Track user action<br/>- Compliance]
+    end
+    
+    ADMIN --> WEB
+    ADMIN --> FORM_DESIGN
+    ADMIN --> FORM_VERSIONING
+    
+    DOCTOR --> WEB
+    DOCTOR --> MOBILE
+    DOCTOR --> FORM_FILLING
+    DOCTOR --> FORM_REVIEW
+    
+    NURSE --> WEB
+    NURSE --> MOBILE
+    NURSE --> FORM_FILLING
+    NURSE --> FORM_REVIEW
+    
+    LAB_TECH --> WEB
+    LAB_TECH --> MOBILE
+    LAB_TECH --> FORM_FILLING
+    
+    WEB --> FORM_FILLING
+    WEB --> FORM_REVIEW
+    MOBILE --> FORM_FILLING
+    MOBILE --> FORM_REVIEW
+    
+    FORM_DESIGN --> FORM_ENTITY
+    FORM_DESIGN --> FIELD_ENTITY
+    FORM_DESIGN --> VALIDATION_ENTITY
+    
+    FORM_FILLING --> DATA_ENTITY
+    FORM_REVIEW --> DATA_ENTITY
+    
+    FORM_VERSIONING --> RULE_VERSION
+    FORM_FILLING --> RULE_VALIDATION
+    FORM_FILLING --> RULE_PERMISSION
+    FORM_DESIGN --> RULE_AUDIT

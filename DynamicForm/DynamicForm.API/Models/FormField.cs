@@ -6,10 +6,17 @@ namespace DynamicForm.API.Models;
 public class FormField
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// Public ID dùng cho API (GUID, unique, indexed)
+    /// </summary>
+    [Required]
+    public Guid PublicId { get; set; } = Guid.NewGuid();
 
     [Required]
-    public Guid FormVersionId { get; set; }
+    public int FormVersionId { get; set; }
 
     [Required]
     [MaxLength(50)]
@@ -43,11 +50,17 @@ public class FormField
 
     public string? PropertiesJson { get; set; } // JSON for dynamic properties
 
-    public Guid? ParentFieldId { get; set; } // For nested/repeater fields
+    public int? ParentFieldId { get; set; } // For nested/repeater fields
 
     public int? MinOccurs { get; set; }
 
     public int? MaxOccurs { get; set; }
+
+    /// <summary>
+    /// Mã section dùng cho repeat section / nhóm field.
+    /// </summary>
+    [MaxLength(50)]
+    public string? SectionCode { get; set; }
 
     // Navigation properties
     [ForeignKey("FormVersionId")]

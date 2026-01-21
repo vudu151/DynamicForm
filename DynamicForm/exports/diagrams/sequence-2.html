@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Mermaid Diagram 2</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <div class="mermaid">
+sequenceDiagram
+    participant Admin
+    participant FormDesigner
+    participant ValidationEngine
+    participant VersionManager
+    participant Database
+    
+    Admin->>FormDesigner: Táº¡o form má»›i (PHIEU_KHAM)
+    FormDesigner->>FormDesigner: Äá»‹nh nghÄ©a form metadata
+    FormDesigner->>FormDesigner: ThÃªm cÃ¡c field
+    FormDesigner->>ValidationEngine: Thiáº¿t láº­p validation rules
+    ValidationEngine-->>FormDesigner: XÃ¡c nháº­n rules
+    FormDesigner->>VersionManager: Táº¡o version 1.0
+    VersionManager->>Database: LÆ°u form + version
+    Database-->>VersionManager: Success
+    VersionManager-->>Admin: Form Ä‘Ã£ táº¡o
+    
+    Note over Admin,Database: Form á»Ÿ tráº¡ng thÃ¡i Draft
+    
+    Admin->>VersionManager: Duyá»‡t vÃ  kÃ­ch hoáº¡t version
+    VersionManager->>Database: Set IsActive = true
+    Database-->>VersionManager: Success
+    VersionManager-->>Admin: Form Ä‘Ã£ active
+    </div>
+</body>
+</html>

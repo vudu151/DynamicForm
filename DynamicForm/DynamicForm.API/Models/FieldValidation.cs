@@ -6,10 +6,17 @@ namespace DynamicForm.API.Models;
 public class FieldValidation
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// Public ID dùng cho API (GUID, unique, indexed)
+    /// </summary>
+    [Required]
+    public Guid PublicId { get; set; } = Guid.NewGuid();
 
     [Required]
-    public Guid FieldId { get; set; }
+    public int FieldId { get; set; }
 
     [Required]
     public int RuleType { get; set; } // 1=Required, 2=Min, 3=Max, 4=Range, 5=Regex, etc.

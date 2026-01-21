@@ -1,0 +1,21 @@
+﻿sequenceDiagram
+    participant Doctor
+    participant FormRenderer
+    participant DataService
+    participant Database
+    
+    Doctor->>DataService: Xem bá»‡nh Ã¡n (ObjectId: 12345)
+    DataService->>Database: Load FORM_DATA
+    Database-->>DataService: Data + FormVersionId
+    
+    DataService->>Database: Load FormVersion metadata
+    Database-->>DataService: Version metadata (v1.0)
+    
+    DataService->>Database: Load Fields cá»§a version Ä‘Ã³
+    Database-->>DataService: Fields metadata
+    
+    DataService-->>FormRenderer: Data + Metadata (version cÅ©)
+    FormRenderer->>FormRenderer: Render form theo version cÅ©
+    FormRenderer-->>Doctor: Hiá»ƒn thá»‹ form vá»›i dá»¯ liá»‡u cÅ©
+    
+    Note over Doctor,Database: Form Ä‘Æ°á»£c render theo Ä‘Ãºng<br/>version khi dá»¯ liá»‡u Ä‘Æ°á»£c táº¡o

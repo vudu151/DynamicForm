@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Mermaid Diagram 5</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <div class="mermaid">
+sequenceDiagram
+    participant Admin
+    participant VersionManager
+    participant Database
+    
+    Admin->>VersionManager: YÃªu cáº§u táº¡o version má»›i
+    VersionManager->>Database: Load version hiá»‡n táº¡i
+    Database-->>VersionManager: Current version (v1.0)
+    
+    VersionManager->>VersionManager: Copy metadata version cÅ©
+    VersionManager->>VersionManager: Táº¡o version má»›i (v2.0)
+    
+    Admin->>Admin: Chá»‰nh sá»­a fields/validation
+    
+    VersionManager->>Database: LÆ°u version má»›i
+    Database-->>VersionManager: Success
+    
+    Note over Database: Version cÅ© (v1.0) váº«n giá»¯ nguyÃªn<br/>Data cÅ© gáº¯n vá»›i v1.0
+    
+    Admin->>VersionManager: KÃ­ch hoáº¡t version má»›i
+    VersionManager->>Database: Set v2.0 IsActive = true<br/>Set v1.0 IsActive = false
+    Database-->>VersionManager: Success
+    VersionManager-->>Admin: Version má»›i Ä‘Ã£ active
+    </div>
+</body>
+</html>

@@ -7,5 +7,5 @@ public static class ApiConfig
     // Hoặc nếu API chạy trên localhost: "http://10.0.2.2:5144" (Android emulator)
     // iOS simulator: "http://localhost:5144" hoặc IP LAN
     // Port 5144 là port HTTP mặc định của DynamicForm.API
-    public const string BaseUrl = "http://localhost:5144";
+    public const string BaseUrl = "https://localhost:7220";
 }

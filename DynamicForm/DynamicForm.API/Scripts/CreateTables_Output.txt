@@ -1,0 +1,29 @@
+Changed database context to 'master'.
+Database DynamicFormDb đã được tạo thành công.
+Changed database context to 'DynamicFormDb'.
+Bảng Forms đã được tạo thành công.
+Bảng FormVersions đã được tạo thành công.
+Foreign Key FK_Forms_CurrentVersionId đã được tạo thành công.
+Bảng FormFields đã được tạo thành công.
+Bảng FieldValidations đã được tạo thành công.
+Bảng FieldConditions đã được tạo thành công.
+Bảng FieldOptions đã được tạo thành công.
+Bảng FormData đã được tạo thành công.
+Bảng FormDataHistory đã được tạo thành công.
+Bảng FormPermissions đã được tạo thành công.
+ 
+=============================================
+TẤT CẢ CÁC BẢNG ĐÃ ĐƯỢC TẠO THÀNH CÔNG!
+=============================================
+ 
+Danh sách các bảng đã tạo:
+1. Forms
+2. FormVersions
+3. FormFields
+4. FieldValidations
+5. FieldConditions
+6. FieldOptions
+7. FormData
+8. FormDataHistory
+9. FormPermissions
+ 

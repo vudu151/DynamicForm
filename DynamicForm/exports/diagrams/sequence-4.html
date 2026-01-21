@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Mermaid Diagram 4</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <div class="mermaid">
+sequenceDiagram
+    participant Doctor
+    participant MobileApp
+    participant API
+    participant ValidationEngine
+    participant DataService
+    participant Database
+    
+    Doctor->>MobileApp: Má»Ÿ app, chá»n form
+    MobileApp->>MobileApp: Hiá»ƒn thá»‹ danh sÃ¡ch form
+    Doctor->>MobileApp: Chá»n PHIEU_KHAM
+    
+    MobileApp->>API: GET /api/forms/code/PHIEU_KHAM/metadata
+    API->>Database: Load form metadata (version active)
+    Database-->>API: Form + Fields + Validation
+    API-->>MobileApp: JSON metadata
+    MobileApp->>MobileApp: Render form Ä‘á»™ng (MAUI controls)
+    MobileApp-->>Doctor: Hiá»ƒn thá»‹ form native
+    
+    Doctor->>Doctor: Nháº­p dá»¯ liá»‡u (cÃ³ thá»ƒ offline)
+    Doctor->>MobileApp: Submit form
+    
+    MobileApp->>API: POST /api/formdata/validate
+    API->>ValidationEngine: Validate
+    ValidationEngine-->>API: Validation result
+    API-->>MobileApp: Validation errors (náº¿u cÃ³)
+    
+    alt Validation fail
+        MobileApp-->>Doctor: Hiá»ƒn thá»‹ lá»—i theo field
+    else Validation pass
+        MobileApp->>API: POST /api/formdata
+        API->>DataService: CreateFormData
+        DataService->>Database: LÆ°u FORM_DATA
+        Database-->>DataService: Success
+        DataService-->>API: Created
+        API-->>MobileApp: 201 Created
+        MobileApp-->>Doctor: ThÃ nh cÃ´ng
+    end
+    </div>
+</body>
+</html>

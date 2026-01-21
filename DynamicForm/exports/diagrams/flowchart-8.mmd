@@ -1,0 +1,24 @@
+﻿graph TB
+    subgraph "FORM CONSTRAINTS"
+        C1[Form Code pháº£i unique]
+        C2[Form pháº£i cÃ³ Ã­t nháº¥t 1 version]
+        C3[Version pháº£i cÃ³ format: major.minor.patch]
+    end
+    
+    subgraph "FIELD CONSTRAINTS"
+        C4[Field Code pháº£i unique trong 1 version]
+        C5[Field Order pháº£i > 0]
+        C6[Required field pháº£i cÃ³ validation]
+    end
+    
+    subgraph "DATA CONSTRAINTS"
+        C7[Data pháº£i match vá»›i version schema]
+        C8[Data khÃ´ng thá»ƒ sá»­a náº¿u version Ä‘Ã£ inactive]
+        C9[Data pháº£i pass táº¥t cáº£ validations]
+    end
+    
+    subgraph "VERSION CONSTRAINTS"
+        C10[Version má»›i pháº£i > version cÅ©]
+        C11[Version active khÃ´ng thá»ƒ xÃ³a]
+        C12[Version cÅ© khÃ´ng thá»ƒ sá»­a]
+    end

@@ -6,7 +6,14 @@ namespace DynamicForm.API.Models;
 public class Form
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// Public ID dùng cho API (GUID, unique, indexed)
+    /// </summary>
+    [Required]
+    public Guid PublicId { get; set; } = Guid.NewGuid();
 
     [Required]
     [MaxLength(50)]
@@ -21,7 +28,7 @@ public class Form
 
     public int Status { get; set; } = 0; // 0=Draft, 1=Active, 2=Inactive
 
-    public Guid? CurrentVersionId { get; set; }
+    public int? CurrentVersionId { get; set; }
 
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
@@ -38,5 +45,4 @@ public class Form
     public virtual FormVersion? CurrentVersion { get; set; }
 
     public virtual ICollection<FormVersion> Versions { get; set; } = new List<FormVersion>();
-    public virtual ICollection<FormPermission> Permissions { get; set; } = new List<FormPermission>();
 }

@@ -155,7 +155,7 @@
                         </div>
                         <div class="card-body">
                             <small class="text-muted">
-                                Tip: click để thêm. Có thể kéo-thả để sắp xếp.
+                                <strong>Tip:</strong> Click để thêm field. Kéo icon <strong>☰</strong> để sắp xếp lại thứ tự.
                             </small>
                         </div>
                     </div>
@@ -178,7 +178,7 @@
                             </div>
                             <div class="list-group" id="fieldsList"></div>
                             <div class="mt-3 text-muted small">
-                                Kéo-thả để sắp xếp. Click 1 field để chỉnh bên phải.
+                                <strong>Kéo icon ☰</strong> để sắp xếp. <strong>Click field</strong> để chỉnh sửa bên phải.
                             </div>
                         </div>
                     </div>
@@ -440,7 +440,7 @@
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="df-drag-handle text-muted" title="Kéo để sắp xếp">≡</span>
+                                    <span class="df-drag-handle text-muted" title="Kéo để sắp xếp" draggable="false">☰</span>
                                     <div class="fw-semibold">${escapeHtml(f.label || "(no label)")}${required}</div>
                                 </div>
                                 <div class="small opacity-75">${typeLabel(f.fieldType)} ${code}</div>
@@ -453,8 +453,18 @@
                     item.addEventListener("click", (e) => {
                         // Avoid interfering with drag
                         if (e.target && e.target.closest && e.target.closest(".df-drag-handle")) return;
+                        // Don't select if we just finished dragging
+                        if (state.draggingIndex !== null) return;
                         selectField(idx);
                     });
+                    
+                    // Make drag handle work better
+                    const dragHandle = item.querySelector(".df-drag-handle");
+                    if (dragHandle) {
+                        dragHandle.addEventListener("mousedown", (e) => {
+                            e.stopPropagation();
+                        });
+                    }
                     list.appendChild(item);
                 });
 
@@ -680,6 +690,7 @@
 
             function wireDragDrop() {
                 const list = el("fieldsList");
+                let dropPosition = null; // 'before' or 'after'
 
                 list.addEventListener("dragstart", (e) => {
                     const item = e.target.closest(".df-field-item");
@@ -687,39 +698,91 @@
                     state.draggingIndex = Number(item.dataset.idx);
                     item.classList.add("df-dragging");
                     e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", ""); // Required for Firefox
                 });
 
                 list.addEventListener("dragend", (e) => {
                     const item = e.target.closest(".df-field-item");
                     if (item) item.classList.remove("df-dragging");
                     state.draggingIndex = null;
-                    document.querySelectorAll(".df-drop-target").forEach(x => x.classList.remove("df-drop-target"));
+                    dropPosition = null;
+                    document.querySelectorAll(".df-drop-target").forEach(x => {
+                        x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                    });
+                    // Remove placeholder if exists
+                    const placeholder = list.querySelector(".df-drop-placeholder");
+                    if (placeholder) placeholder.remove();
                 });
 
                 list.addEventListener("dragover", (e) => {
                     e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    
                     const over = e.target.closest(".df-field-item");
-                    if (!over) return;
-                    over.classList.add("df-drop-target");
+                    if (!over) {
+                        // Remove all drop targets if not over any item
+                        document.querySelectorAll(".df-drop-target").forEach(x => {
+                            x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                        });
+                        return;
+                    }
+                    
+                    const overIdx = Number(over.dataset.idx);
+                    if (state.draggingIndex === overIdx) return;
+                    
+                    // Determine drop position based on mouse Y position
+                    const rect = over.getBoundingClientRect();
+                    const mouseY = e.clientY;
+                    const itemMiddle = rect.top + rect.height / 2;
+                    dropPosition = mouseY < itemMiddle ? "before" : "after";
+                    
+                    // Remove all drop targets first
+                    document.querySelectorAll(".df-drop-target").forEach(x => {
+                        x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                    });
+                    
+                    // Add drop target to current item
+                    over.classList.add("df-drop-target", `df-drop-${dropPosition}`);
                 });
 
                 list.addEventListener("dragleave", (e) => {
-                    const over = e.target.closest(".df-field-item");
-                    if (!over) return;
-                    over.classList.remove("df-drop-target");
+                    // Only remove if leaving the list area, not just moving between items
+                    const relatedTarget = e.relatedTarget;
+                    if (!list.contains(relatedTarget)) {
+                        document.querySelectorAll(".df-drop-target").forEach(x => {
+                            x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                        });
+                    }
                 });
 
                 list.addEventListener("drop", (e) => {
                     e.preventDefault();
                     const over = e.target.closest(".df-field-item");
                     if (!over) return;
+                    
                     const from = state.draggingIndex;
                     const to = Number(over.dataset.idx);
                     if (from == null || Number.isNaN(to) || from === to) return;
 
+                    // Calculate target index based on drop position
+                    let targetIdx = to;
+                    if (dropPosition === "after" && from < to) {
+                        targetIdx = to + 1;
+                    } else if (dropPosition === "before" && from > to) {
+                        targetIdx = to;
+                    } else if (dropPosition === "after" && from > to) {
+                        targetIdx = to + 1;
+                    } else if (dropPosition === "before" && from < to) {
+                        targetIdx = to;
+                    }
+
+                    // Ensure target index is within bounds
+                    targetIdx = Math.max(0, Math.min(targetIdx, state.fields.length - 1));
+
+                    // Move the field
                     const moved = state.fields.splice(from, 1)[0];
-                    state.fields.splice(to, 0, moved);
-                    state.selectedIndex = to;
+                    state.fields.splice(targetIdx, 0, moved);
+                    state.selectedIndex = targetIdx;
                     normalizeOrders();
                     setDirty(true);
                     renderPreview();

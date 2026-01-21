@@ -15,18 +15,18 @@ public class FormDataController : ControllerBase
         _formDataService = formDataService;
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<FormDataDto>> GetFormData(Guid id)
+    [HttpGet("{submissionId}")]
+    public async Task<ActionResult<FormDataDto>> GetFormData(int submissionId)
     {
-        var formData = await _formDataService.GetFormDataAsync(id);
+        var formData = await _formDataService.GetFormDataAsync(submissionId);
         if (formData == null) return NotFound();
         return Ok(formData);
     }
 
-    [HttpGet("object/{objectId}/{objectType}")]
-    public async Task<ActionResult<FormDataDto>> GetFormDataByObject(string objectId, string objectType)
+    [HttpGet("object/{objectId}/{objectType}/{formVersionPublicId}")]
+    public async Task<ActionResult<FormDataDto>> GetFormDataByObject(string objectId, string objectType, Guid formVersionPublicId)
     {
-        var formData = await _formDataService.GetFormDataByObjectAsync(objectId, objectType);
+        var formData = await _formDataService.GetFormDataByObjectAsync(objectId, objectType, formVersionPublicId);
         if (formData == null) return NotFound();
         return Ok(formData);
     }
@@ -37,7 +37,10 @@ public class FormDataController : ControllerBase
         try
         {
             var formData = await _formDataService.CreateFormDataAsync(request);
-            return CreatedAtAction(nameof(GetFormData), new { id = formData.Id }, formData);
+            // Note: FormDataDto.Id là Guid (PublicId), nhưng GetFormDataAsync nhận int (SubmissionId)
+            // Cần lấy SubmissionId từ response hoặc tạo cách khác
+            // Tạm thời return Created với formData
+            return CreatedAtAction(nameof(GetFormData), new { submissionId = 0 }, formData);
         }
         catch (InvalidOperationException ex)
         {
@@ -49,12 +52,12 @@ public class FormDataController : ControllerBase
         }
     }
 
-    [HttpPut("{id}")]
-    public async Task<ActionResult<FormDataDto>> UpdateFormData(Guid id, [FromBody] CreateFormDataRequest request)
+    [HttpPut("{submissionId}")]
+    public async Task<ActionResult<FormDataDto>> UpdateFormData(int submissionId, [FromBody] CreateFormDataRequest request)
     {
         try
         {
-            var formData = await _formDataService.UpdateFormDataAsync(id, request);
+            var formData = await _formDataService.UpdateFormDataAsync(submissionId, request);
             return Ok(formData);
         }
         catch (ArgumentException ex)

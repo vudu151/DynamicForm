@@ -38,15 +38,64 @@ body {
   user-select: none;
   font-weight: 700;
   line-height: 1;
+  font-size: 1.2em;
+  padding: 0 4px;
+}
+
+.df-drag-handle:active {
+  cursor: grabbing;
+}
+
+.df-field-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.df-field-item:hover {
+  background-color: rgba(13, 110, 253, 0.05);
 }
 
 .df-field-item.df-dragging {
-  opacity: 0.5;
+  opacity: 0.4;
+  transform: scale(0.95);
+  background-color: rgba(13, 110, 253, 0.1);
 }
 
 .df-drop-target {
-  outline: 2px dashed rgba(13, 110, 253, 0.45);
+  outline: 2px dashed rgba(13, 110, 253, 0.6);
   outline-offset: 2px;
+  background-color: rgba(13, 110, 253, 0.08);
+}
+
+.df-drop-target.df-drop-before::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: rgba(13, 110, 253, 0.8);
+  border-radius: 2px;
+}
+
+.df-drop-target.df-drop-after::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: rgba(13, 110, 253, 0.8);
+  border-radius: 2px;
+}
+
+.df-drop-placeholder {
+  height: 40px;
+  background-color: rgba(13, 110, 253, 0.1);
+  border: 2px dashed rgba(13, 110, 253, 0.5);
+  border-radius: 4px;
+  margin: 4px 0;
 }
 
 .df-preview-control .form-control,

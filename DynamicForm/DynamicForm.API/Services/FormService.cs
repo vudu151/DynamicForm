@@ -14,21 +14,29 @@ public class FormService : IFormService
         _context = context;
     }
 
-    public async Task<List<FormVersionDto>> GetVersionsByFormIdAsync(Guid formId)
+    public async Task<List<FormVersionDto>> GetVersionsByFormIdAsync(Guid formPublicId)
     {
+        // Convert Form PublicId -> Form Id
+        var formId = await _context.Forms
+            .Where(f => f.PublicId == formPublicId)
+            .Select(f => (int?)f.Id)
+            .FirstOrDefaultAsync();
+        
+        if (formId == null) return new List<FormVersionDto>();
+
         return await _context.FormVersions
-            .Where(v => v.FormId == formId)
+            .Where(v => v.FormId == formId.Value)
             .OrderByDescending(v => v.CreatedDate)
             .Select(v => new FormVersionDto
             {
-                Id = v.Id,
-                FormId = v.FormId,
+                Id = v.PublicId, // Return PublicId
+                FormId = v.Form.PublicId, // Return Form PublicId
                 Version = v.Version,
-                IsActive = v.IsActive,
+                IsActive = v.IsActive || v.Status == 1, // Published = Active
                 CreatedDate = v.CreatedDate,
                 CreatedBy = v.CreatedBy,
-                ApprovedDate = v.ApprovedDate,
-                ApprovedBy = v.ApprovedBy,
+                ApprovedDate = v.PublishedDate ?? v.ApprovedDate,
+                ApprovedBy = v.PublishedBy ?? v.ApprovedBy,
                 ChangeLog = v.ChangeLog
             })
             .ToListAsync();
@@ -37,14 +45,15 @@ public class FormService : IFormService
     public async Task<List<FormDto>> GetAllFormsAsync()
     {
         return await _context.Forms
+            .Include(f => f.CurrentVersion)
             .Select(f => new FormDto
             {
-                Id = f.Id,
+                Id = f.PublicId, // Return PublicId
                 Code = f.Code,
                 Name = f.Name,
                 Description = f.Description,
                 Status = f.Status,
-                CurrentVersionId = f.CurrentVersionId,
+                CurrentVersionId = f.CurrentVersion != null ? f.CurrentVersion.PublicId : null, // Return PublicId
                 CreatedDate = f.CreatedDate,
                 CreatedBy = f.CreatedBy
             })
@@ -60,30 +69,32 @@ public class FormService : IFormService
 
         return new FormDto
         {
-            Id = form.Id,
+            Id = form.PublicId, // Return PublicId cho API
             Code = form.Code,
             Name = form.Name,
             Description = form.Description,
             Status = form.Status,
-            CurrentVersionId = form.CurrentVersionId,
+            CurrentVersionId = form.CurrentVersion?.PublicId, // Return PublicId
             CreatedDate = form.CreatedDate,
             CreatedBy = form.CreatedBy
         };
     }
 
-    public async Task<FormDto?> GetFormByIdAsync(Guid id)
+    public async Task<FormDto?> GetFormByIdAsync(Guid publicId)
     {
-        var form = await _context.Forms.FindAsync(id);
+        // Convert PublicId (Guid) -> Id (int)
+        var form = await _context.Forms
+            .FirstOrDefaultAsync(f => f.PublicId == publicId);
         if (form == null) return null;
 
         return new FormDto
         {
-            Id = form.Id,
+            Id = form.PublicId, // Return PublicId cho API
             Code = form.Code,
             Name = form.Name,
             Description = form.Description,
             Status = form.Status,
-            CurrentVersionId = form.CurrentVersionId,
+            CurrentVersionId = form.CurrentVersion?.PublicId, // Return PublicId
             CreatedDate = form.CreatedDate,
             CreatedBy = form.CreatedBy
         };
@@ -97,11 +108,12 @@ public class FormService : IFormService
 
         if (form?.CurrentVersion == null) return null;
 
-        return await GetFormMetadataByVersionIdAsync(form.CurrentVersion.Id);
+        return await GetFormMetadataByVersionIdAsync(form.CurrentVersion.PublicId);
     }
 
-    public async Task<FormMetadataDto?> GetFormMetadataByVersionIdAsync(Guid versionId)
+    public async Task<FormMetadataDto?> GetFormMetadataByVersionIdAsync(Guid versionPublicId)
     {
+        // Convert Version PublicId -> Version Id
         var version = await _context.FormVersions
             .Include(v => v.Form)
             .Include(v => v.Fields)
@@ -110,7 +122,7 @@ public class FormService : IFormService
                 .ThenInclude(f => f.Conditions)
             .Include(v => v.Fields)
                 .ThenInclude(f => f.Options)
-            .FirstOrDefaultAsync(v => v.Id == versionId);
+            .FirstOrDefaultAsync(v => v.PublicId == versionPublicId);
 
         if (version == null) return null;
 
@@ -118,33 +130,33 @@ public class FormService : IFormService
         {
             Form = new FormDto
             {
-                Id = version.Form.Id,
+                Id = version.Form.PublicId, // Return PublicId
                 Code = version.Form.Code,
                 Name = version.Form.Name,
                 Description = version.Form.Description,
                 Status = version.Form.Status,
-                CurrentVersionId = version.Form.CurrentVersionId,
+                CurrentVersionId = version.Form.CurrentVersion?.PublicId, // Return PublicId
                 CreatedDate = version.Form.CreatedDate,
                 CreatedBy = version.Form.CreatedBy
             },
             Version = new FormVersionDto
             {
-                Id = version.Id,
-                FormId = version.FormId,
+                Id = version.PublicId, // Return PublicId
+                FormId = version.Form.PublicId, // Return Form PublicId
                 Version = version.Version,
-                IsActive = version.IsActive,
+                IsActive = version.IsActive || version.Status == 1, // Published = Active
                 CreatedDate = version.CreatedDate,
                 CreatedBy = version.CreatedBy,
-                ApprovedDate = version.ApprovedDate,
-                ApprovedBy = version.ApprovedBy,
+                ApprovedDate = version.PublishedDate ?? version.ApprovedDate,
+                ApprovedBy = version.PublishedBy ?? version.ApprovedBy,
                 ChangeLog = version.ChangeLog
             },
             Fields = version.Fields
                 .OrderBy(f => f.DisplayOrder)
                 .Select(f => new FormFieldDto
                 {
-                    Id = f.Id,
-                    FormVersionId = f.FormVersionId,
+                    Id = f.PublicId, // Return PublicId
+                    FormVersionId = version.PublicId, // Return Version PublicId
                     FieldCode = f.FieldCode,
                     FieldType = f.FieldType,
                     Label = f.Label,
@@ -156,16 +168,17 @@ public class FormService : IFormService
                     HelpText = f.HelpText,
                     CssClass = f.CssClass,
                     PropertiesJson = f.PropertiesJson,
-                    ParentFieldId = f.ParentFieldId,
+                    ParentFieldId = f.ParentField?.PublicId, // Return ParentField PublicId
                     MinOccurs = f.MinOccurs,
                     MaxOccurs = f.MaxOccurs,
+                    SectionCode = f.SectionCode,
                     Validations = f.Validations
                         .Where(v => v.IsActive)
                         .OrderBy(v => v.Priority)
                         .Select(v => new FieldValidationDto
                         {
-                            Id = v.Id,
-                            FieldId = v.FieldId,
+                            Id = v.PublicId, // Return PublicId
+                            FieldId = f.PublicId, // Return Field PublicId
                             RuleType = v.RuleType,
                             RuleValue = v.RuleValue,
                             ErrorMessage = v.ErrorMessage,
@@ -176,8 +189,8 @@ public class FormService : IFormService
                         .OrderBy(c => c.Priority)
                         .Select(c => new FieldConditionDto
                         {
-                            Id = c.Id,
-                            FieldId = c.FieldId,
+                            Id = c.PublicId, // Return PublicId
+                            FieldId = f.PublicId, // Return Field PublicId
                             ConditionType = c.ConditionType,
                             Expression = c.Expression,
                             ActionsJson = c.ActionsJson,
@@ -187,8 +200,8 @@ public class FormService : IFormService
                         .OrderBy(o => o.DisplayOrder)
                         .Select(o => new FieldOptionDto
                         {
-                            Id = o.Id,
-                            FieldId = o.FieldId,
+                            Id = o.PublicId, // Return PublicId
+                            FieldId = f.PublicId, // Return Field PublicId
                             Value = o.Value,
                             Label = o.Label,
                             DisplayOrder = o.DisplayOrder,
@@ -198,8 +211,9 @@ public class FormService : IFormService
         };
     }
 
-    public async Task<FormMetadataDto?> UpdateFormMetadataByVersionIdAsync(Guid versionId, UpdateFormMetadataRequest request)
+    public async Task<FormMetadataDto?> UpdateFormMetadataByVersionIdAsync(Guid versionPublicId, UpdateFormMetadataRequest request)
     {
+        // Convert Version PublicId -> Version Id
         var version = await _context.FormVersions
             .Include(v => v.Fields)
                 .ThenInclude(f => f.Options)
@@ -207,20 +221,20 @@ public class FormService : IFormService
                 .ThenInclude(f => f.Validations)
             .Include(v => v.Fields)
                 .ThenInclude(f => f.Conditions)
-            .FirstOrDefaultAsync(v => v.Id == versionId);
+            .FirstOrDefaultAsync(v => v.PublicId == versionPublicId);
 
         if (version == null) return null;
 
         version.ChangeLog = request.ChangeLog;
 
-        // Remove deleted fields
-        var incomingFieldIds = request.Fields
+        // Remove deleted fields (map PublicId -> Id)
+        var incomingFieldPublicIds = request.Fields
             .Where(f => f.Id != Guid.Empty)
-            .Select(f => f.Id)
+            .Select(f => f.Id) // f.Id là PublicId trong DTO
             .ToHashSet();
 
         var fieldsToRemove = version.Fields
-            .Where(f => !incomingFieldIds.Contains(f.Id))
+            .Where(f => !incomingFieldPublicIds.Contains(f.PublicId))
             .ToList();
 
         if (fieldsToRemove.Count > 0)
@@ -228,21 +242,23 @@ public class FormService : IFormService
             _context.FormFields.RemoveRange(fieldsToRemove);
         }
 
-        // Upsert fields
-        var existingFieldsById = version.Fields.ToDictionary(f => f.Id, f => f);
+        // Upsert fields (map PublicId -> Id)
+        var existingFieldsByPublicId = version.Fields.ToDictionary(f => f.PublicId, f => f);
         foreach (var f in request.Fields)
         {
             FormField entity;
-            if (f.Id != Guid.Empty && existingFieldsById.TryGetValue(f.Id, out var existingEntity))
+            if (f.Id != Guid.Empty && existingFieldsByPublicId.TryGetValue(f.Id, out var existingEntity))
             {
+                // f.Id là PublicId trong DTO
                 entity = existingEntity;
             }
             else
             {
+                // Tạo field mới với PublicId mới
                 entity = new FormField
                 {
-                    Id = f.Id == Guid.Empty ? Guid.NewGuid() : f.Id,
-                    FormVersionId = versionId
+                    PublicId = f.Id == Guid.Empty ? Guid.NewGuid() : f.Id,
+                    FormVersionId = version.Id // Dùng version.Id (int)
                 };
                 _context.FormFields.Add(entity);
             }
@@ -258,16 +274,28 @@ public class FormService : IFormService
             entity.HelpText = f.HelpText;
             entity.CssClass = f.CssClass;
             entity.PropertiesJson = f.PropertiesJson;
-            entity.ParentFieldId = f.ParentFieldId;
+            // Map ParentFieldId (PublicId -> Id)
+            if (f.ParentFieldId.HasValue)
+            {
+                var parentFieldId = await _context.FormFields
+                    .Where(pf => pf.PublicId == f.ParentFieldId.Value)
+                    .Select(pf => (int?)pf.Id)
+                    .FirstOrDefaultAsync();
+                entity.ParentFieldId = parentFieldId;
+            }
+            else
+            {
+                entity.ParentFieldId = null;
+            }
             entity.MinOccurs = f.MinOccurs;
             entity.MaxOccurs = f.MaxOccurs;
 
-            // Options
-            var incomingOptionsById = f.Options
+            // Options (map PublicId -> Id)
+            var incomingOptionsByPublicId = f.Options
                 .Where(o => o.Id != Guid.Empty)
-                .ToDictionary(o => o.Id, o => o);
+                .ToDictionary(o => o.Id, o => o); // o.Id là PublicId trong DTO
             var optionsToRemove = entity.Options
-                .Where(o => !incomingOptionsById.ContainsKey(o.Id))
+                .Where(o => !incomingOptionsByPublicId.ContainsKey(o.PublicId))
                 .ToList();
             if (optionsToRemove.Count > 0)
             {
@@ -275,20 +303,20 @@ public class FormService : IFormService
             }
             foreach (var o in f.Options)
             {
-                var optIsNew = o.Id == Guid.Empty || entity.Options.All(eo => eo.Id != o.Id);
+                var optIsNew = o.Id == Guid.Empty || entity.Options.All(eo => eo.PublicId != o.Id);
                 FieldOption optEntity;
                 if (optIsNew)
                 {
                     optEntity = new FieldOption
                     {
-                        Id = o.Id == Guid.Empty ? Guid.NewGuid() : o.Id,
-                        FieldId = entity.Id
+                        PublicId = o.Id == Guid.Empty ? Guid.NewGuid() : o.Id,
+                        FieldId = entity.Id // Dùng entity.Id (int)
                     };
                     entity.Options.Add(optEntity);
                 }
                 else
                 {
-                    optEntity = entity.Options.First(eo => eo.Id == o.Id);
+                    optEntity = entity.Options.First(eo => eo.PublicId == o.Id);
                 }
                 optEntity.Value = o.Value;
                 optEntity.Label = o.Label;
@@ -296,12 +324,12 @@ public class FormService : IFormService
                 optEntity.IsDefault = o.IsDefault;
             }
 
-            // Validations
-            var incomingValidationsById = f.Validations
+            // Validations (map PublicId -> Id)
+            var incomingValidationsByPublicId = f.Validations
                 .Where(v => v.Id != Guid.Empty)
-                .ToDictionary(v => v.Id, v => v);
+                .ToDictionary(v => v.Id, v => v); // v.Id là PublicId trong DTO
             var validationsToRemove = entity.Validations
-                .Where(v => !incomingValidationsById.ContainsKey(v.Id))
+                .Where(v => !incomingValidationsByPublicId.ContainsKey(v.PublicId))
                 .ToList();
             if (validationsToRemove.Count > 0)
             {
@@ -309,20 +337,20 @@ public class FormService : IFormService
             }
             foreach (var v in f.Validations)
             {
-                var valIsNew = v.Id == Guid.Empty || entity.Validations.All(ev => ev.Id != v.Id);
+                var valIsNew = v.Id == Guid.Empty || entity.Validations.All(ev => ev.PublicId != v.Id);
                 FieldValidation valEntity;
                 if (valIsNew)
                 {
                     valEntity = new FieldValidation
                     {
-                        Id = v.Id == Guid.Empty ? Guid.NewGuid() : v.Id,
-                        FieldId = entity.Id
+                        PublicId = v.Id == Guid.Empty ? Guid.NewGuid() : v.Id,
+                        FieldId = entity.Id // Dùng entity.Id (int)
                     };
                     entity.Validations.Add(valEntity);
                 }
                 else
                 {
-                    valEntity = entity.Validations.First(ev => ev.Id == v.Id);
+                    valEntity = entity.Validations.First(ev => ev.PublicId == v.Id);
                 }
 
                 valEntity.RuleType = v.RuleType;
@@ -332,12 +360,12 @@ public class FormService : IFormService
                 valEntity.IsActive = v.IsActive;
             }
 
-            // Conditions
-            var incomingConditionsById = f.Conditions
+            // Conditions (map PublicId -> Id)
+            var incomingConditionsByPublicId = f.Conditions
                 .Where(c => c.Id != Guid.Empty)
-                .ToDictionary(c => c.Id, c => c);
+                .ToDictionary(c => c.Id, c => c); // c.Id là PublicId trong DTO
             var conditionsToRemove = entity.Conditions
-                .Where(c => !incomingConditionsById.ContainsKey(c.Id))
+                .Where(c => !incomingConditionsByPublicId.ContainsKey(c.PublicId))
                 .ToList();
             if (conditionsToRemove.Count > 0)
             {
@@ -345,20 +373,20 @@ public class FormService : IFormService
             }
             foreach (var c in f.Conditions)
             {
-                var condIsNew = c.Id == Guid.Empty || entity.Conditions.All(ec => ec.Id != c.Id);
+                var condIsNew = c.Id == Guid.Empty || entity.Conditions.All(ec => ec.PublicId != c.Id);
                 FieldCondition condEntity;
                 if (condIsNew)
                 {
                     condEntity = new FieldCondition
                     {
-                        Id = c.Id == Guid.Empty ? Guid.NewGuid() : c.Id,
-                        FieldId = entity.Id
+                        PublicId = c.Id == Guid.Empty ? Guid.NewGuid() : c.Id,
+                        FieldId = entity.Id // Dùng entity.Id (int)
                     };
                     entity.Conditions.Add(condEntity);
                 }
                 else
                 {
-                    condEntity = entity.Conditions.First(ec => ec.Id == c.Id);
+                    condEntity = entity.Conditions.First(ec => ec.PublicId == c.Id);
                 }
 
                 condEntity.ConditionType = c.ConditionType;
@@ -369,7 +397,7 @@ public class FormService : IFormService
         }
 
         await _context.SaveChangesAsync();
-        return await GetFormMetadataByVersionIdAsync(versionId);
+        return await GetFormMetadataByVersionIdAsync(version.PublicId);
     }
 
     public async Task<FormDto> CreateFormAsync(FormDto formDto)
@@ -400,14 +428,16 @@ public class FormService : IFormService
         _context.Forms.Add(form);
         await _context.SaveChangesAsync();
 
-        formDto.Id = form.Id;
+        formDto.Id = form.PublicId; // Return PublicId
         formDto.CreatedDate = form.CreatedDate;
         return formDto;
     }
 
-    public async Task<FormVersionDto> CreateVersionAsync(Guid formId, FormVersionDto versionDto)
+    public async Task<FormVersionDto> CreateVersionAsync(Guid formPublicId, FormVersionDto versionDto)
     {
-        var form = await _context.Forms.FindAsync(formId);
+        // Convert Form PublicId -> Form Id
+        var form = await _context.Forms
+            .FirstOrDefaultAsync(f => f.PublicId == formPublicId);
         if (form == null) throw new ArgumentException("Form not found");
 
         var versionText = versionDto.Version?.Trim();
@@ -416,7 +446,7 @@ public class FormService : IFormService
             throw new InvalidOperationException("Version is required");
         }
 
-        var exists = await _context.FormVersions.AnyAsync(v => v.FormId == formId && v.Version == versionText);
+        var exists = await _context.FormVersions.AnyAsync(v => v.FormId == form.Id && v.Version == versionText);
         if (exists)
         {
             throw new InvalidOperationException($"Version already exists: {versionText}");
@@ -424,7 +454,7 @@ public class FormService : IFormService
 
         var version = new FormVersion
         {
-            FormId = formId,
+            FormId = form.Id, // Dùng form.Id (int)
             Version = versionText,
             IsActive = false,
             CreatedBy = versionDto.CreatedBy,
@@ -435,44 +465,57 @@ public class FormService : IFormService
         _context.FormVersions.Add(version);
         await _context.SaveChangesAsync();
 
-        versionDto.Id = version.Id;
+        versionDto.Id = version.PublicId; // Return PublicId
         versionDto.CreatedDate = version.CreatedDate;
         return versionDto;
     }
 
-    public async Task<bool> ActivateVersionAsync(Guid versionId)
+    public async Task<bool> ActivateVersionAsync(Guid versionPublicId)
     {
+        // Convert Version PublicId -> Version Id
         var version = await _context.FormVersions
             .Include(v => v.Form)
-            .FirstOrDefaultAsync(v => v.Id == versionId);
+            .FirstOrDefaultAsync(v => v.PublicId == versionPublicId);
 
         if (version == null) return false;
 
-        // Deactivate all other versions of this form
+        // Publish version: Set Status = Published (1)
+        // Archive all other versions of this form
         var otherVersions = await _context.FormVersions
-            .Where(v => v.FormId == version.FormId && v.Id != versionId)
+            .Where(v => v.FormId == version.FormId && v.Id != version.Id) // Dùng version.Id (int)
             .ToListAsync();
 
         foreach (var v in otherVersions)
         {
-            v.IsActive = false;
+            if (v.Status == 1) // If was Published, archive it
+            {
+                v.Status = 2; // Archived
+            }
+            v.IsActive = false; // Keep for backward compatibility
         }
 
-        version.IsActive = true;
-        version.Form.CurrentVersionId = version.Id;
-        version.Form.Status = 1; // Mark form as Active when a version is activated
-        version.ApprovedDate = DateTime.UtcNow;
-        version.ApprovedBy = "System"; // TODO: Get from current user
+        // Publish this version
+        version.Status = 1; // Published
+        version.IsActive = true; // Keep for backward compatibility
+        version.Form.CurrentVersionId = version.Id; // Dùng version.Id (int)
+        version.Form.Status = 1; // Mark form as Active when a version is published
+        version.PublishedDate = DateTime.UtcNow;
+        version.PublishedBy = "System"; // TODO: Get from current user
+        // Keep ApprovedDate for backward compatibility
+        version.ApprovedDate = version.PublishedDate;
+        version.ApprovedBy = version.PublishedBy;
 
         await _context.SaveChangesAsync();
+
         return true;
     }
 
-    public async Task<bool> DeactivateFormAsync(Guid formId)
+    public async Task<bool> DeactivateFormAsync(Guid formPublicId)
     {
+        // Convert Form PublicId -> Form Id
         var form = await _context.Forms
             .Include(f => f.Versions)
-            .FirstOrDefaultAsync(f => f.Id == formId);
+            .FirstOrDefaultAsync(f => f.PublicId == formPublicId);
 
         if (form == null) return false;
 

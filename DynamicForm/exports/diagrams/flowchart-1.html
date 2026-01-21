@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Mermaid Diagram 1</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <div class="mermaid">
+%% DynamicForm Business Architecture - Sơ đồ tổng thể
+graph TB
+
+    %% BUSINESS ACTORS (Xanh Dương)
+    subgraph "BUSINESS ACTORS"["BUSINESS ACTORS"]
+      style "BUSINESS ACTORS" fill:#e8f3fc,stroke:#1976d2,stroke-width:2px
+      ADMIN["Quản trị viên<br/>- Tạo/sửa form<br/>- Quản lý version<br/>- Phân quyền<br/>- Thiết kế metadata"]
+      DOCTOR["Bác sĩ<br/>- Khám bệnh<br/>- Điền phiếu khám<br/>- Xem bệnh án<br/>- Mobile/Web"]
+      NURSE["Điều dưỡng<br/>- Chăm sóc<br/>- Điền phiếu chăm sóc<br/>- Theo dõi<br/>- Mobile/Web"]
+      LAB_TECH["Kỹ thuật viên<br/>- Xét nghiệm<br/>- Điền phiếu xét nghiệm<br/>- Mobile/Web"]
+      ADMIN_STAFF["Nhân viên hành chính<br/>- Quản lý hồ sơ<br/>- Báo cáo<br/>- Export dữ liệu"]
+    end
+
+    %% ACCESS CHANNELS (Xanh Lá)
+    subgraph "ACCESS CHANNELS"["ACCESS CHANNELS"]
+      style "ACCESS CHANNELS" fill:#e6fbee,stroke:#18804d,stroke-width:2px
+      WEB["Web Application<br/>- Razor Pages<br/>- Desktop/Tablet<br/>- Full features"]
+      MOBILE["Mobile App<br/>- Android/iOS<br/>- Offline capable<br/>- Field work"]
+    end
+
+    %% BUSINESS PROCESSES (Cam)
+    subgraph "BUSINESS PROCESSES"["BUSINESS PROCESSES"]
+      style "BUSINESS PROCESSES" fill:#fff3e0,stroke:#fc8803,stroke-width:2px
+      FORM_DESIGN["Thiết kế Form<br/>- Định nghĩa metadata<br/>- Cấu hình field<br/>- Thiết lập validation"]
+      FORM_VERSIONING["Quản lý Version<br/>- Tạo version mới<br/>- Duyệt version<br/>- Kích hoạt version"]
+      FORM_FILLING["Điền Form<br/>- Load form theo version<br/>- Nhập dữ liệu<br/>- Validate dữ liệu"]
+      FORM_REVIEW["Xem/In Form<br/>- Xem dữ liệu cũ<br/>- In báo cáo<br/>- Export dữ liệu"]
+    end
+
+    %% BUSINESS ENTITIES (Tím)
+    subgraph "BUSINESS ENTITIES"["BUSINESS ENTITIES"]
+      style "BUSINESS ENTITIES" fill:#f2e7fd,stroke:#6c2eb2,stroke-width:2px
+      FORM_ENTITY["Form<br/>- Phiếu khám<br/>- Phiếu chăm sóc<br/>- Bệnh án<br/>- Phiếu xét nghiệm"]
+      FIELD_ENTITY["Field<br/>- Text, Number<br/>- Date, Select<br/>- Checkbox, Repeater"]
+      VALIDATION_ENTITY["Validation Rule<br/>- Required<br/>- Range<br/>- Conditional"]
+      DATA_ENTITY["Form Data<br/>- Dữ liệu đã điền<br/>- Gắn với version<br/>- Audit trail"]
+    end
+
+    %% BUSINESS RULES (Đỏ)
+    subgraph "BUSINESS RULES"["BUSINESS RULES"]
+      style "BUSINESS RULES" fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+      RULE_VERSION["Versioning Rule<br/>- Immutable version<br/>- Data gắn version<br/>- Không sửa version cũ"]
+      RULE_VALIDATION["Validation Rule<br/>- Client + Server<br/>- Conditional logic<br/>- Range sinh lý"]
+      RULE_PERMISSION["Permission Rule<br/>- Role-based access<br/>- Form-level permission<br/>- Field-level permission"]
+      RULE_AUDIT["Audit Rule<br/>- Log mọi thay đổi<br/>- Track user action<br/>- Compliance"]
+    end
+
+    %% Layout connections (Spacing clarity by invisible edges)
+    ADMIN_STAFF -.-> WEB
+    LAB_TECH -.-> RULE_VALIDATION
+    NURSE -.-> VALIDATION_ENTITY
+
+    %% Actor → Channels/Processes
+    ADMIN --> WEB
+    ADMIN --> FORM_DESIGN
+    ADMIN --> FORM_VERSIONING
+
+    DOCTOR --> WEB
+    DOCTOR --> MOBILE
+    DOCTOR --> FORM_FILLING
+    DOCTOR --> FORM_REVIEW
+
+    NURSE --> WEB
+    NURSE --> MOBILE
+    NURSE --> FORM_FILLING
+    NURSE --> FORM_REVIEW
+
+    LAB_TECH --> WEB
+    LAB_TECH --> MOBILE
+    LAB_TECH --> FORM_FILLING
+
+    ADMIN_STAFF --> WEB
+
+    %% Channels → Processes
+    WEB --> FORM_FILLING
+    WEB --> FORM_REVIEW
+    MOBILE --> FORM_FILLING
+    MOBILE --> FORM_REVIEW
+
+    %% Processes → Entities
+    FORM_DESIGN --> FORM_ENTITY
+    FORM_DESIGN --> FIELD_ENTITY
+    FORM_DESIGN --> VALIDATION_ENTITY
+
+    FORM_FILLING --> DATA_ENTITY
+    FORM_REVIEW --> DATA_ENTITY
+
+    %% Processes → Rules
+    FORM_VERSIONING --> RULE_VERSION
+    FORM_FILLING --> RULE_VALIDATION
+    FORM_FILLING --> RULE_PERMISSION
+    FORM_DESIGN --> RULE_AUDIT
+
+    %% Space between clusters
+    linkStyle default interpolate basis
+    </div>
+</body>
+</html>

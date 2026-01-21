@@ -4,9 +4,9 @@ namespace DynamicForm.API.Services;
 
 public interface IFormDataService
 {
-    Task<FormDataDto?> GetFormDataAsync(Guid id);
-    Task<FormDataDto?> GetFormDataByObjectAsync(string objectId, string objectType);
+    Task<FormDataDto?> GetFormDataAsync(int submissionId);
+    Task<FormDataDto?> GetFormDataByObjectAsync(string objectId, string objectType, Guid formVersionPublicId);
     Task<FormDataDto> CreateFormDataAsync(CreateFormDataRequest request);
-    Task<FormDataDto> UpdateFormDataAsync(Guid id, CreateFormDataRequest request);
+    Task<FormDataDto> UpdateFormDataAsync(int submissionId, CreateFormDataRequest request);
     Task<ValidationResultDto> ValidateFormDataAsync(Guid formVersionId, Dictionary<string, object> data);
 }

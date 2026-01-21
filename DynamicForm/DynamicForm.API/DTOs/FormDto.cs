@@ -43,6 +43,7 @@ public class FormFieldDto
     public Guid? ParentFieldId { get; set; }
     public int? MinOccurs { get; set; }
     public int? MaxOccurs { get; set; }
+    public string? SectionCode { get; set; }
     public List<FieldValidationDto> Validations { get; set; } = new();
     public List<FieldConditionDto> Conditions { get; set; } = new();
     public List<FieldOptionDto> Options { get; set; } = new();

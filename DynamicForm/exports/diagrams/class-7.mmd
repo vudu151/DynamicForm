@@ -1,0 +1,105 @@
+﻿classDiagram
+    class Form {
+        +Guid Id
+        +string Code
+        +string Name
+        +string Description
+        +FormStatus Status
+        +Guid? CurrentVersionId
+        +DateTime CreatedDate
+        +string CreatedBy
+        +List~FormVersion~ Versions
+        +List~FormPermission~ Permissions
+    }
+    
+    class FormVersion {
+        +Guid Id
+        +Guid FormId
+        +string Version
+        +bool IsActive
+        +DateTime CreatedDate
+        +string CreatedBy
+        +DateTime? ApprovedDate
+        +string ApprovedBy
+        +Form Form
+        +List~FormField~ Fields
+        +List~FormData~ FormData
+    }
+    
+    class FormField {
+        +Guid Id
+        +Guid FormVersionId
+        +string FieldCode
+        +FieldType FieldType
+        +string Label
+        +int DisplayOrder
+        +bool IsRequired
+        +bool IsVisible
+        +string DefaultValue
+        +string Placeholder
+        +Dictionary~string,object~ Properties
+        +FormVersion FormVersion
+        +List~FieldValidation~ Validations
+        +List~FieldCondition~ Conditions
+    }
+    
+    class FieldValidation {
+        +Guid Id
+        +Guid FieldId
+        +ValidationRuleType RuleType
+        +string RuleValue
+        +string ErrorMessage
+        +int Priority
+        +FormField Field
+    }
+    
+    class FieldCondition {
+        +Guid Id
+        +Guid FieldId
+        +ConditionType Type
+        +string Expression
+        +Dictionary~string,object~ Actions
+        +FormField Field
+    }
+    
+    class FormData {
+        +Guid Id
+        +Guid FormVersionId
+        +string ObjectId
+        +string ObjectType
+        +string DataJson
+        +DateTime CreatedDate
+        +string CreatedBy
+        +DateTime? ModifiedDate
+        +string ModifiedBy
+        +FormVersion FormVersion
+    }
+    
+    class FormPermission {
+        +Guid Id
+        +Guid FormId
+        +string RoleCode
+        +PermissionType Type
+        +bool CanView
+        +bool CanEdit
+        +bool CanDelete
+        +Form Form
+    }
+    
+    class AuditLog {
+        +Guid Id
+        +string EntityType
+        +Guid EntityId
+        +string Action
+        +string OldValue
+        +string NewValue
+        +DateTime CreatedDate
+        +string CreatedBy
+    }
+    
+    Form "1" --> "*" FormVersion
+    FormVersion "1" --> "*" FormField
+    FormVersion "1" --> "*" FormData
+    FormField "1" --> "*" FieldValidation
+    FormField "1" --> "*" FieldCondition
+    Form "1" --> "*" FormPermission
