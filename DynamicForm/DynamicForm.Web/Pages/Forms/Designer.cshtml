@@ -20,25 +20,25 @@
             </h2>
             @if (Model.Metadata != null)
             {
-                <div class="text-muted">
-                    <span class="me-2"><strong>@Model.Metadata.Form.Name</strong> (@Model.Metadata.Form.Code)</span>
-                    <span class="badge bg-primary">Version @Model.Metadata.Version.Version</span>
-                </div>
+                        <div class="text-muted">
+                            <span class="me-2"><strong>@Model.Metadata.Form.Name</strong> (@Model.Metadata.Form.Code)</span>
+                            <span class="badge bg-primary">Version @Model.Metadata.Version.Version</span>
+                        </div>
             }
         </div>
         <div>
             <a class="btn btn-outline-secondary" href="/Forms">Danh sách Form</a>
             @if (Model.Metadata != null)
             {
-                <form method="post" asp-page-handler="ActivateVersion" class="d-inline">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="Code" value="@Model.Metadata.Form.Code" />
-                    <input type="hidden" name="ActivateVersionId" value="@Model.Metadata.Version.Id" />
-                    <button type="submit" class="btn btn-outline-success ms-2">
-                        Kích hoạt version này
-                    </button>
-                </form>
-                <a class="btn btn-primary ms-2" href="/Forms/Fill?code=@Model.Metadata.Form.Code">Xem / Điền Form</a>
+                        <form method="post" asp-page-handler="ActivateVersion" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="Code" value="@Model.Metadata.Form.Code" />
+                            <input type="hidden" name="ActivateVersionId" value="@Model.Metadata.Version.Id" />
+                            <button type="submit" class="btn btn-outline-success ms-2">
+                                Kích hoạt version này
+                            </button>
+                        </form>
+                        <a class="btn btn-primary ms-2" href="/Forms/Fill?code=@Model.Metadata.Form.Code">Xem / Điền Form</a>
             }
         </div>
     </div>
@@ -52,21 +52,21 @@
                         <option value="">-- Chọn --</option>
                         @foreach (var f in Model.Forms.OrderBy(x => x.Name))
                         {
-                            <option value="@f.Code" data-form-id="@f.Id" selected="@(string.Equals(Model.Code, f.Code, StringComparison.OrdinalIgnoreCase))">
-                                @f.Name (@f.Code)
-                            </option>
+                                    <option value="@f.Code" data-form-id="@f.Id" selected="@(string.Equals(Model.Code, f.Code, StringComparison.OrdinalIgnoreCase))">
+                                        @f.Name (@f.Code)
+                                    </option>
                         }
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Chọn Version</label>
-                    <select class="form-select" id="versionSelect" @(Model.Metadata != null || !Model.Versions.Any() ? "disabled" : "")>
+                    <select class="form-select" id="versionSelect" @(!Model.Versions.Any() ? "disabled" : "")>
                         <option value="">-- Chọn --</option>
                         @foreach (var v in Model.Versions.OrderByDescending(x => x.CreatedDate))
                         {
-                            <option value="@v.Id" selected="@(Model.VersionId == v.Id)">
-                                @v.Version @(v.IsActive ? "(Active)" : "")
-                            </option>
+                                    <option value="@v.Id" selected="@(Model.VersionId == v.Id)">
+                                        @v.Version @(v.IsActive ? "(Active)" : "")
+                                    </option>
                         }
                     </select>
                 </div>
@@ -77,872 +77,1155 @@
 
     @if (Model.Metadata == null)
     {
-        <div class="alert alert-info">
-            Chọn form + version để bắt đầu thiết kế.
-        </div>
+                <div class="alert alert-info">
+                    Chọn form + version để bắt đầu thiết kế.
+                </div>
     }
     else
     {
-        <form method="post" asp-page-handler="Save" id="saveForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="Code" value="@Model.Metadata.Form.Code" />
-            <input type="hidden" name="VersionIdPost" value="@Model.Metadata.Version.Id" />
-            <input type="hidden" name="FieldsJson" id="fieldsJson" />
+                <form method="post" asp-page-handler="Save" id="saveForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Code" value="@Model.Metadata.Form.Code" />
+                    <input type="hidden" name="VersionIdPost" value="@Model.Metadata.Version.Id" />
+                    <input type="hidden" name="FieldsJson" id="fieldsJson" />
 
-            <div class="row g-3">
-                <div class="col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <strong>Toolbox</strong>
-                        </div>
-                        <div class="card-body border-bottom pb-2 mb-0" style="padding-bottom: 0.5rem !important;">
-                            <input class="form-control form-control-sm" id="toolboxSearch" placeholder="Tìm type của form..." />
-                        </div>
-                        <div class="list-group list-group-flush" id="toolbox" style="margin-top: 0 !important; padding-top: 0 !important;">
-                            <button class="list-group-item list-group-item-action" type="button" data-type="1">Text</button>
-                            <button class="list-group-item list-group-item-action" type="button" data-type="2">Number</button>
-                            <button class="list-group-item list-group-item-action" type="button" data-type="3">Date</button>
-                            <button class="list-group-item list-group-item-action" type="button" data-type="6">Select</button>
-                            <button class="list-group-item list-group-item-action" type="button" data-type="10">TextArea</button>
-                        </div>
-                        <div class="card-body">
-                            <small class="text-muted">
-                                <strong>Tip:</strong> Click để thêm field. Kéo icon <strong>☰</strong> để sắp xếp lại thứ tự.
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <strong>Preview</strong>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMoveUp" disabled>↑</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMoveDown" disabled>↓</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnDuplicate" disabled>Duplicate</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" id="btnDelete" disabled>Xóa</button>
+                    <div class="row g-3">
+                        <div class="col-lg-3">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <strong>Toolbox</strong>
+                                </div>
+                                <div class="card-body border-bottom pb-2 mb-0" style="padding-bottom: 0.5rem !important;">
+                                    <input class="form-control form-control-sm" id="toolboxSearch" placeholder="Tìm type của form..." />
+                                </div>
+                                <div class="list-group list-group-flush" id="toolbox" style="margin-top: 0 !important; padding-top: 0 !important;">
+                                    <button class="list-group-item list-group-item-action" type="button" data-type="1">Text</button>
+                                    <button class="list-group-item list-group-item-action" type="button" data-type="2">Number</button>
+                                    <button class="list-group-item list-group-item-action" type="button" data-type="3">Date</button>
+                                    <button class="list-group-item list-group-item-action" type="button" data-type="6">Select</button>
+                                    <button class="list-group-item list-group-item-action" type="button" data-type="10">TextArea</button>
+                                </div>
+                                <div class="card-body">
+                                    <small class="text-muted">
+                                        <strong>Tip:</strong> Click để thêm field. Kéo icon <strong>☰</strong> để sắp xếp lại thứ tự.
+                                    </small>
+                                </div>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div id="previewEmpty" class="text-muted" style="display:none;">
-                                Chưa có câu hỏi nào. Chọn 1 loại ở Toolbox để thêm.
-                            </div>
-                            <div class="list-group" id="fieldsList"></div>
-                            <div class="mt-3 text-muted small">
-                                <strong>Kéo icon ☰</strong> để sắp xếp. <strong>Click field</strong> để chỉnh sửa bên phải.
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <strong>Properties</strong>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">Change log</label>
-                                <input class="form-control" name="ChangeLog" value="@Model.ChangeLog" placeholder="Mô tả thay đổi của version" />
-                            </div>
-
-                            <hr />
-
-                            <div id="propsDisabled" class="text-muted">
-                                Chọn 1 field trong Preview để chỉnh.
-                            </div>
-
-                            <div id="propsPanel" style="display:none;">
-                                <div class="mb-2">
-                                    <label class="form-label">Field type</label>
-                                    <select class="form-select" id="propFieldType">
-                                        <option value="1">Text</option>
-                                        <option value="2">Number</option>
-                                        <option value="3">Date</option>
-                                        <option value="6">Select</option>
-                                        <option value="10">TextArea</option>
-                                    </select>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Field code</label>
-                                    <input class="form-control" id="propFieldCode" />
-                                    <div class="form-text">Dùng để map dữ liệu (ví dụ: HO_TEN, TUOI, ...)</div>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Label</label>
-                                    <input class="form-control" id="propLabel" />
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Placeholder</label>
-                                    <input class="form-control" id="propPlaceholder" />
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Help text</label>
-                                    <input class="form-control" id="propHelpText" />
-                                </div>
-
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <div class="form-check mt-2">
-                                            <input class="form-check-input" type="checkbox" id="propRequired" />
-                                            <label class="form-check-label" for="propRequired">Required</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="form-check mt-2">
-                                            <input class="form-check-input" type="checkbox" id="propVisible" />
-                                            <label class="form-check-label" for="propVisible">Visible</label>
-                                        </div>
+                        <div class="col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <strong>Preview</strong>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMoveUp" disabled>↑</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMoveDown" disabled>↓</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnDuplicate" disabled>Duplicate</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnDelete" disabled>Xóa</button>
                                     </div>
                                 </div>
-
-                                <div class="mb-2">
-                                    <label class="form-label">Col span (layout)</label>
-                                    <select class="form-select" id="propColSpan">
-                                        <option value="12">12/12 (col-md-12)</option>
-                                        <option value="11">11/12 (col-md-11)</option>
-                                        <option value="10">10/12 (col-md-10)</option>
-                                        <option value="9">9/12 (col-md-9)</option>
-                                        <option value="8">8/12 (col-md-8)</option>
-                                        <option value="7">7/12 (col-md-7)</option>
-                                        <option value="6">6/12 (col-md-6)</option>
-                                        <option value="5">5/12 (col-md-5)</option>
-                                        <option value="4">4/12 (col-md-4)</option>
-                                        <option value="3">3/12 (col-md-3)</option>
-                                        <option value="2">2/12 (col-md-2)</option>
-                                        <option value="1">1/12 (col-md-1)</option>
-                                    </select>
-                                    <div class="form-text">Lưu trong PropertiesJson: {"colSpan":...}</div>
+                                <div class="card-body">
+                                    <div id="previewEmpty" class="text-muted" style="display:none;">
+                                        Chưa có câu hỏi nào. Chọn 1 loại ở Toolbox để thêm.
+                                    </div>
+                                    <div class="list-group" id="fieldsList"></div>
+                                    <div class="mt-3 text-muted small">
+                                        <strong>Kéo icon ☰</strong> để sắp xếp. <strong>Click field</strong> để chỉnh sửa bên phải.
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div id="selectOptionsBox" style="display:none;">
+                        <div class="col-lg-3">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <strong>Properties</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Change log</label>
+                                        <input class="form-control" name="ChangeLog" value="@Model.ChangeLog" placeholder="Mô tả thay đổi của version" />
+                                    </div>
+
                                     <hr />
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <strong>Options</strong>
-                                        <button class="btn btn-sm btn-outline-primary" type="button" id="btnAddOption">+ Option</button>
+
+                                    <div id="propsDisabled" class="text-muted">
+                                        Chọn 1 field trong Preview để chỉnh.
                                     </div>
-                                    <div id="optionsList" class="vstack gap-2"></div>
-                                    <div class="form-text">Select sẽ dùng options này khi render.</div>
+
+                                    <div id="propsPanel" style="display:none;">
+                                        <div class="mb-2">
+                                            <label class="form-label">Field type</label>
+                                            <select class="form-select" id="propFieldType">
+                                                <option value="1">Text</option>
+                                                <option value="2">Number</option>
+                                                <option value="3">Date</option>
+                                                <option value="6">Select</option>
+                                                <option value="10">TextArea</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Field code</label>
+                                            <input class="form-control" id="propFieldCode" />
+                                            <div class="form-text">Dùng để map dữ liệu (ví dụ: HO_TEN, TUOI, ...)</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Label</label>
+                                            <input class="form-control" id="propLabel" />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Placeholder</label>
+                                            <input class="form-control" id="propPlaceholder" />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Help text</label>
+                                            <input class="form-control" id="propHelpText" />
+                                        </div>
+
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <div class="form-check mt-2">
+                                                    <input class="form-check-input" type="checkbox" id="propRequired" />
+                                                    <label class="form-check-label" for="propRequired">Required</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-check mt-2">
+                                                    <input class="form-check-input" type="checkbox" id="propVisible" />
+                                                    <label class="form-check-label" for="propVisible">Visible</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <label class="form-label">Col span (layout)</label>
+                                            <select class="form-select" id="propColSpan">
+                                                <option value="12">12/12 (col-md-12)</option>
+                                                <option value="11">11/12 (col-md-11)</option>
+                                                <option value="10">10/12 (col-md-10)</option>
+                                                <option value="9">9/12 (col-md-9)</option>
+                                                <option value="8">8/12 (col-md-8)</option>
+                                                <option value="7">7/12 (col-md-7)</option>
+                                                <option value="6">6/12 (col-md-6)</option>
+                                                <option value="5">5/12 (col-md-5)</option>
+                                                <option value="4">4/12 (col-md-4)</option>
+                                                <option value="3">3/12 (col-md-3)</option>
+                                                <option value="2">2/12 (col-md-2)</option>
+                                                <option value="1">1/12 (col-md-1)</option>
+                                            </select>
+                                            <div class="form-text">Lưu trong PropertiesJson: {"colSpan":...}</div>
+                                        </div>
+
+                                        <div id="selectOptionsBox" style="display:none;">
+                                            <hr />
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <strong>Options</strong>
+                                                <button class="btn btn-sm btn-outline-primary" type="button" id="btnAddOption">+ Option</button>
+                                            </div>
+                                            <div id="optionsList" class="vstack gap-2"></div>
+                                            <div class="form-text">Select sẽ dùng options này khi render.</div>
+                                        </div>
+
+                                        <hr />
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <strong>Validations</strong>
+                                            <button class="btn btn-sm btn-outline-success" type="button" id="btnAddValidation">+ Validation</button>
+                                        </div>
+                                        <div id="validationsList" class="vstack gap-2 mb-3"></div>
+                                        <div class="form-text">Thêm các rule validation cho field này.</div>
+
+                                        <hr />
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <strong>Conditions</strong>
+                                            <button class="btn btn-sm btn-outline-info" type="button" id="btnAddCondition">+ Condition</button>
+                                        </div>
+                                        <div id="conditionsList" class="vstack gap-2"></div>
+                                        <div class="form-text">Điều kiện hiển thị/ẩn/enable/disable field.</div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <div id="designerErrors" class="alert alert-warning py-2 small mb-2" style="display:none;"></div>
+                                    <button type="button" class="btn btn-success w-100" id="btnSave">Lưu thiết kế</button>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <div id="designerErrors" class="alert alert-warning py-2 small mb-2" style="display:none;"></div>
-                            <button type="button" class="btn btn-success w-100" id="btnSave">Lưu thiết kế</button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </form>
+                </form>
 
-        <script>
-            const API_BASE_URL = @Html.Raw(JsonSerializer.Serialize(apiBaseUrl, jsOptions));
-            // IMPORTANT: serialize to camelCase for JS (fieldCode/fieldType/label...)
-            const initialFields = @Html.Raw(JsonSerializer.Serialize(fields, jsOptions));
-            const hasMetadata = @(Model.Metadata != null ? "true" : "false"); // Flag để biết đã có metadata hay chưa
-        </script>
-        <script>
-            const state = {
-                fields: Array.isArray(initialFields) ? initialFields : [],
-                selectedIndex: -1,
-                dirty: false,
-                draggingIndex: null,
-                isSubmitting: false
-            };
+                <script>
+                    const API_BASE_URL = @Html.Raw(JsonSerializer.Serialize(apiBaseUrl, jsOptions));
+                    // IMPORTANT: serialize to camelCase for JS (fieldCode/fieldType/label...)
+                    const initialFields = @Html.Raw(JsonSerializer.Serialize(fields, jsOptions));
+                    const hasMetadata = @(Model.Metadata != null ? "true" : "false"); // Flag để biết đã có metadata hay chưa
+                </script>
+                <script>
+                    const state = {
+                        fields: Array.isArray(initialFields) ? initialFields : [],
+                        selectedIndex: -1,
+                        dirty: false,
+                        draggingIndex: null,
+                        isSubmitting: false
+                    };
 
-            const el = (id) => document.getElementById(id);
+                    const el = (id) => document.getElementById(id);
 
-            function typeLabel(t) {
-                switch (Number(t)) {
-                    case 1: return "Text";
-                    case 2: return "Number";
-                    case 3: return "Date";
-                    case 6: return "Select";
-                    case 10: return "TextArea";
-                    default: return `Type ${t}`;
-                }
-            }
-
-            function ensureArray(x) { return Array.isArray(x) ? x : []; }
-
-            function setDirty(isDirty) {
-                state.dirty = !!isDirty;
-                el("dirtyBadge").style.display = state.dirty ? "inline-block" : "none";
-            }
-
-            function normalizeCode(code) {
-                return String(code || "").trim().toUpperCase();
-            }
-
-            function labelToCode(label) {
-                const raw = String(label || "")
-                    .trim()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, ""); // strip diacritics
-
-                let code = raw
-                    .replace(/[^a-zA-Z0-9]+/g, "_")
-                    .replace(/^_+|_+$/g, "")
-                    .toUpperCase();
-
-                if (!code) code = "FIELD";
-                if (/^[0-9]/.test(code)) code = "F_" + code;
-                return code;
-            }
-
-            function validateAll() {
-                const errors = [];
-                const seen = new Map();
-
-                state.fields.forEach((f, idx) => {
-                    const c = normalizeCode(f.fieldCode);
-                    if (!c) {
-                        errors.push(`Field #${idx + 1}: FieldCode không được để trống`);
-                        return;
+                    function typeLabel(t) {
+                        switch (Number(t)) {
+                            case 1: return "Text";
+                            case 2: return "Number";
+                            case 3: return "Date";
+                            case 6: return "Select";
+                            case 10: return "TextArea";
+                            default: return `Type ${t}`;
+                        }
                     }
-                    if (!/^[A-Z0-9_]+$/.test(c)) {
-                        errors.push(`Field #${idx + 1}: FieldCode chỉ nên dùng A-Z, 0-9 và _`);
+
+                    function ensureArray(x) { return Array.isArray(x) ? x : []; }
+
+                    function setDirty(isDirty) {
+                        state.dirty = !!isDirty;
+                        el("dirtyBadge").style.display = state.dirty ? "inline-block" : "none";
                     }
-                    if (seen.has(c)) {
-                        errors.push(`Trùng FieldCode: ${c} (fields #${seen.get(c) + 1} và #${idx + 1})`);
-                    } else {
-                        seen.set(c, idx);
+
+                    function normalizeCode(code) {
+                        return String(code || "").trim().toUpperCase();
                     }
-                });
 
-                return errors;
-            }
+                    function labelToCode(label) {
+                        const raw = String(label || "")
+                            .trim()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, ""); // strip diacritics
 
-            function renderErrors() {
-                const errs = validateAll();
-                const box = el("designerErrors");
-                if (errs.length === 0) {
-                    box.style.display = "none";
-                    box.innerHTML = "";
-                    el("btnSave").disabled = false;
-                    return;
-                }
-                box.style.display = "block";
-                box.innerHTML = `<div class="fw-semibold mb-1">Cần sửa trước khi lưu:</div><ul class="mb-0 ps-3">${errs.map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>`;
-                el("btnSave").disabled = true;
-            }
+                        let code = raw
+                            .replace(/[^a-zA-Z0-9]+/g, "_")
+                            .replace(/^_+|_+$/g, "")
+                            .toUpperCase();
 
-            function nextFieldCode() {
-                const existing = new Set(state.fields.map(f => (f.fieldCode || "").toUpperCase()));
-                let i = state.fields.length + 1;
-                while (true) {
-                    const code = `FIELD_${String(i).padStart(3, "0")}`;
-                    if (!existing.has(code)) return code;
-                    i++;
-                }
-            }
+                        if (!code) code = "FIELD";
+                        if (/^[0-9]/.test(code)) code = "F_" + code;
+                        return code;
+                    }
 
-            function normalizeOrders() {
-                state.fields.forEach((f, idx) => {
-                    f.displayOrder = idx + 1;
-                    f.options = ensureArray(f.options);
-                    f.validations = ensureArray(f.validations);
-                    f.conditions = ensureArray(f.conditions);
-                    f.options.forEach((o, oidx) => {
-                        o.displayOrder = oidx + 1;
-                    });
-                });
-            }
+                    function validateAll() {
+                        const errors = [];
+                        const seen = new Map();
 
-            function parsePropsJson(field) {
-                const raw = field.propertiesJson;
-                if (!raw) return {};
-                try { return JSON.parse(raw); } catch { return {}; }
-            }
+                        state.fields.forEach((f, idx) => {
+                            const c = normalizeCode(f.fieldCode);
+                            if (!c) {
+                                errors.push(`Field #${idx + 1}: FieldCode không được để trống`);
+                                return;
+                            }
+                            if (!/^[A-Z0-9_]+$/.test(c)) {
+                                errors.push(`Field #${idx + 1}: FieldCode chỉ nên dùng A-Z, 0-9 và _`);
+                            }
+                            if (seen.has(c)) {
+                                errors.push(`Trùng FieldCode: ${c} (fields #${seen.get(c) + 1} và #${idx + 1})`);
+                            } else {
+                                seen.set(c, idx);
+                            }
+                        });
 
-            function setColSpan(field, colSpan) {
-                const props = parsePropsJson(field);
-                const n = Number(colSpan);
-                const safe = Number.isFinite(n) ? Math.min(12, Math.max(1, Math.trunc(n))) : 6;
-                props.colSpan = safe;
-                field.propertiesJson = JSON.stringify(props);
-            }
+                        return errors;
+                    }
 
-            function getColSpan(field) {
-                const props = parsePropsJson(field);
-                const cs = Number(props.colSpan || 6);
-                if (!Number.isFinite(cs)) return 6;
-                return Math.min(12, Math.max(1, Math.trunc(cs)));
-            }
+                    function renderErrors() {
+                        const errs = validateAll();
+                        const box = el("designerErrors");
+                        if (errs.length === 0) {
+                            box.style.display = "none";
+                            box.innerHTML = "";
+                            el("btnSave").disabled = false;
+                            return;
+                        }
+                        box.style.display = "block";
+                        box.innerHTML = `<div class="fw-semibold mb-1">Cần sửa trước khi lưu:</div><ul class="mb-0 ps-3">${errs.map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>`;
+                        el("btnSave").disabled = true;
+                    }
 
-            function renderPreview() {
-                const list = el("fieldsList");
-                list.innerHTML = "";
+                    function nextFieldCode() {
+                        const existing = new Set(state.fields.map(f => (f.fieldCode || "").toUpperCase()));
+                        let i = state.fields.length + 1;
+                        while (true) {
+                            const code = `FIELD_${String(i).padStart(3, "0")}`;
+                            if (!existing.has(code)) return code;
+                            i++;
+                        }
+                    }
 
-                el("previewEmpty").style.display = state.fields.length === 0 ? "block" : "none";
+                    function normalizeOrders() {
+                        state.fields.forEach((f, idx) => {
+                            f.displayOrder = idx + 1;
+                            f.options = ensureArray(f.options);
+                            f.validations = ensureArray(f.validations);
+                            f.conditions = ensureArray(f.conditions);
+                            f.options.forEach((o, oidx) => {
+                                o.displayOrder = oidx + 1;
+                            });
+                        });
+                    }
 
-                state.fields.forEach((f, idx) => {
-                    const item = document.createElement("div");
-                    item.className = "df-field-item";
-                    item.setAttribute("draggable", "true");
-                    item.dataset.idx = String(idx);
-                    if (idx === state.selectedIndex) item.classList.add("active");
-                    if (f.isVisible === false) item.classList.add("df-field-hidden");
+                    function normalizeNumericFields() {
+                        state.fields.forEach(f => {
+                            // Normalize field properties
+                            f.fieldType = Number(f.fieldType) || 1;
+                            f.displayOrder = Number(f.displayOrder) || 0;
+                    
+                            // Normalize validations
+                            f.validations = ensureArray(f.validations);
+                            f.validations.forEach(v => {
+                                v.ruleType = Number(v.ruleType) || 1;
+                                v.priority = Number(v.priority) || 0;
+                                v.isActive = v.isActive !== false;
+                            });
+                    
+                            // Normalize conditions
+                            f.conditions = ensureArray(f.conditions);
+                            f.conditions.forEach(c => {
+                                c.conditionType = Number(c.conditionType) || 1;
+                                c.priority = Number(c.priority) || 0;
+                            });
+                    
+                            // Normalize options
+                            f.options = ensureArray(f.options);
+                            f.options.forEach(o => {
+                                o.displayOrder = Number(o.displayOrder) || 0;
+                            });
+                        });
+                    }
 
-                    const required = f.isRequired ? "<span class='text-danger ms-1'>*</span>" : "";
-                    const code = f.fieldCode ? `<span class="text-muted">• ${escapeHtml(f.fieldCode)}</span>` : "";
-                    const preview = renderFieldPreviewHtml(f);
+                    function parsePropsJson(field) {
+                        const raw = field.propertiesJson;
+                        if (!raw) return {};
+                        try { return JSON.parse(raw); } catch { return {}; }
+                    }
 
-                    item.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-start position-relative">
-                            <div class="flex-grow-1 df-field-content" style="width: 100%; max-width: 100%; min-width: 0;">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="df-drag-handle text-muted" title="Kéo để sắp xếp" draggable="false">☰</span>
-                                    <div class="fw-semibold">${escapeHtml(f.label || "(no label)")}${required}</div>
+                    function setColSpan(field, colSpan) {
+                        const props = parsePropsJson(field);
+                        const n = Number(colSpan);
+                        const safe = Number.isFinite(n) ? Math.min(12, Math.max(1, Math.trunc(n))) : 6;
+                        props.colSpan = safe;
+                        field.propertiesJson = JSON.stringify(props);
+                    }
+
+                    function getColSpan(field) {
+                        const props = parsePropsJson(field);
+                        const cs = Number(props.colSpan || 6);
+                        if (!Number.isFinite(cs)) return 6;
+                        return Math.min(12, Math.max(1, Math.trunc(cs)));
+                    }
+
+                    function renderPreview() {
+                        const list = el("fieldsList");
+                        list.innerHTML = "";
+
+                        el("previewEmpty").style.display = state.fields.length === 0 ? "block" : "none";
+
+                        state.fields.forEach((f, idx) => {
+                            const item = document.createElement("div");
+                            item.className = "df-field-item";
+                            item.setAttribute("draggable", "true");
+                            item.dataset.idx = String(idx);
+                            if (idx === state.selectedIndex) item.classList.add("active");
+                            if (f.isVisible === false) item.classList.add("df-field-hidden");
+
+                            const required = f.isRequired ? "<span class='text-danger ms-1'>*</span>" : "";
+                            const code = f.fieldCode ? `<span class="text-muted">• ${escapeHtml(f.fieldCode)}</span>` : "";
+                            const preview = renderFieldPreviewHtml(f);
+
+                            item.innerHTML = `
+                                <div class="d-flex justify-content-between align-items-start position-relative">
+                                    <div class="flex-grow-1 df-field-content" style="width: 100%; max-width: 100%; min-width: 0;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="df-drag-handle text-muted" title="Kéo để sắp xếp" draggable="false">☰</span>
+                                            <div class="fw-semibold">${escapeHtml(f.label || "(no label)")}${required}</div>
+                                        </div>
+                                        <div class="small opacity-75">${typeLabel(f.fieldType)} ${code}</div>
+                                        <div class="mt-2 df-preview-control">${preview}</div>
+                                    </div>
+                                    <span class="badge bg-light text-dark df-field-badge" style="position: absolute; top: 0; right: 0;">${idx + 1}</span>
                                 </div>
-                                <div class="small opacity-75">${typeLabel(f.fieldType)} ${code}</div>
-                                <div class="mt-2 df-preview-control">${preview}</div>
-                            </div>
-                            <span class="badge bg-light text-dark df-field-badge" style="position: absolute; top: 0; right: 0;">${idx + 1}</span>
-                        </div>
-                    `;
+                            `;
 
-                    item.addEventListener("click", (e) => {
-                        // Avoid interfering with drag
-                        if (e.target && e.target.closest && e.target.closest(".df-drag-handle")) return;
-                        // Don't select if we just finished dragging
-                        if (state.draggingIndex !== null) return;
-                        selectField(idx);
-                    });
+                            item.addEventListener("click", (e) => {
+                                // Avoid interfering with drag
+                                if (e.target && e.target.closest && e.target.closest(".df-drag-handle")) return;
+                                // Don't select if we just finished dragging
+                                if (state.draggingIndex !== null) return;
+                                selectField(idx);
+                            });
                     
-                    // Make drag handle work better
-                    const dragHandle = item.querySelector(".df-drag-handle");
-                    if (dragHandle) {
-                        dragHandle.addEventListener("mousedown", (e) => {
-                            e.stopPropagation();
+                            // Make drag handle work better
+                            const dragHandle = item.querySelector(".df-drag-handle");
+                            if (dragHandle) {
+                                dragHandle.addEventListener("mousedown", (e) => {
+                                    e.stopPropagation();
+                                });
+                            }
+                            list.appendChild(item);
                         });
-                    }
-                    list.appendChild(item);
-                });
 
-                const hasSel = state.selectedIndex >= 0 && state.selectedIndex < state.fields.length;
-                el("btnMoveUp").disabled = !hasSel || state.selectedIndex === 0;
-                el("btnMoveDown").disabled = !hasSel || state.selectedIndex === state.fields.length - 1;
-                el("btnDuplicate").disabled = !hasSel;
-                el("btnDelete").disabled = !hasSel;
+                        const hasSel = state.selectedIndex >= 0 && state.selectedIndex < state.fields.length;
+                        el("btnMoveUp").disabled = !hasSel || state.selectedIndex === 0;
+                        el("btnMoveDown").disabled = !hasSel || state.selectedIndex === state.fields.length - 1;
+                        el("btnDuplicate").disabled = !hasSel;
+                        el("btnDelete").disabled = !hasSel;
 
-                renderErrors();
-            }
-
-            function renderFieldPreviewHtml(f) {
-                const ph = escapeHtml(f.placeholder || "");
-                switch (Number(f.fieldType)) {
-                    case 1:
-                        return `<input class="form-control form-control-sm" type="text" placeholder="${ph}" disabled>`;
-                    case 2:
-                        return `<input class="form-control form-control-sm" type="number" placeholder="${ph}" disabled>`;
-                    case 3:
-                        return `<input class="form-control form-control-sm" type="date" disabled>`;
-                    case 6: {
-                        const opts = ensureArray(f.options)
-                            .sort((a, b) => (Number(a.displayOrder || 0) - Number(b.displayOrder || 0)))
-                            .slice(0, 6);
-                        const html = opts.map(o => `<option>${escapeHtml(o.label || o.value || "")}</option>`).join("");
-                        return `<select class="form-select form-select-sm" disabled><option>-- Chọn --</option>${html}</select>`;
-                    }
-                    case 10:
-                        return `<textarea class="form-control form-control-sm" rows="2" placeholder="${ph}" disabled></textarea>`;
-                    default:
-                        return `<input class="form-control form-control-sm" type="text" placeholder="${ph}" disabled>`;
-                }
-            }
-
-            function escapeHtml(s) {
-                return String(s)
-                    .replaceAll("&", "&amp;")
-                    .replaceAll("<", "&lt;")
-                    .replaceAll(">", "&gt;")
-                    .replaceAll("\"", "&quot;")
-                    .replaceAll("'", "&#39;");
-            }
-
-            function selectField(idx) {
-                state.selectedIndex = idx;
-                renderPreview();
-                renderProperties();
-                // focus label for faster editing
-                setTimeout(() => {
-                    const input = el("propLabel");
-                    if (input) input.focus();
-                }, 0);
-            }
-
-            function renderProperties() {
-                const hasSel = state.selectedIndex >= 0 && state.selectedIndex < state.fields.length;
-                el("propsDisabled").style.display = hasSel ? "none" : "block";
-                el("propsPanel").style.display = hasSel ? "block" : "none";
-                if (!hasSel) return;
-
-                const f = state.fields[state.selectedIndex];
-
-                el("propFieldType").value = String(f.fieldType ?? 1);
-                el("propFieldCode").value = f.fieldCode ?? "";
-                el("propLabel").value = f.label ?? "";
-                el("propPlaceholder").value = f.placeholder ?? "";
-                el("propHelpText").value = f.helpText ?? "";
-                el("propRequired").checked = !!f.isRequired;
-                el("propVisible").checked = (f.isVisible !== false);
-                el("propColSpan").value = String(getColSpan(f));
-
-                const isSelect = Number(f.fieldType) === 6;
-                el("selectOptionsBox").style.display = isSelect ? "block" : "none";
-                if (isSelect) renderOptions();
-            }
-
-            function updateSelected(mutator) {
-                const idx = state.selectedIndex;
-                if (idx < 0 || idx >= state.fields.length) return;
-                mutator(state.fields[idx]);
-                setDirty(true);
-                renderPreview();
-                renderProperties();
-            }
-
-            function renderOptions() {
-                const box = el("optionsList");
-                box.innerHTML = "";
-                const f = state.fields[state.selectedIndex];
-                f.options = ensureArray(f.options);
-
-                f.options.forEach((o, idx) => {
-                    const row = document.createElement("div");
-                    row.className = "border rounded p-2";
-
-                    const isDefault = !!o.isDefault;
-                    row.innerHTML = `
-                        <div class="row g-2 align-items-end">
-                            <div class="col-5">
-                                <label class="form-label mb-1">Value</label>
-                                <input class="form-control form-control-sm" data-k="value" value="${escapeHtml(o.value ?? "")}">
-                            </div>
-                            <div class="col-5">
-                                <label class="form-label mb-1">Label</label>
-                                <input class="form-control form-control-sm" data-k="label" value="${escapeHtml(o.label ?? "")}">
-                            </div>
-                            <div class="col-2">
-                                <button class="btn btn-sm btn-outline-danger w-100" type="button" data-act="del">X</button>
-                            </div>
-                        </div>
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="radio" name="defaultOpt" ${isDefault ? "checked" : ""} data-act="default">
-                            <label class="form-check-label">Default</label>
-                        </div>
-                    `;
-
-                    row.querySelectorAll("input[data-k]").forEach(inp => {
-                        inp.addEventListener("input", (e) => {
-                            const key = e.target.getAttribute("data-k");
-                            o[key] = e.target.value;
-                            setDirty(true);
-                            renderErrors();
-                        });
-                    });
-                    row.querySelector("[data-act='del']").addEventListener("click", () => {
-                        f.options.splice(idx, 1);
-                        setDirty(true);
-                        renderOptions();
                         renderErrors();
-                    });
-                    row.querySelector("[data-act='default']").addEventListener("change", () => {
-                        f.options.forEach(x => x.isDefault = false);
-                        o.isDefault = true;
+                    }
+
+                    function renderFieldPreviewHtml(f) {
+                        const ph = escapeHtml(f.placeholder || "");
+                        switch (Number(f.fieldType)) {
+                            case 1:
+                                return `<input class="form-control form-control-sm" type="text" placeholder="${ph}" disabled>`;
+                            case 2:
+                                return `<input class="form-control form-control-sm" type="number" placeholder="${ph}" disabled>`;
+                            case 3:
+                                return `<input class="form-control form-control-sm" type="date" disabled>`;
+                            case 6: {
+                                const opts = ensureArray(f.options)
+                                    .sort((a, b) => (Number(a.displayOrder || 0) - Number(b.displayOrder || 0)))
+                                    .slice(0, 6);
+                                const html = opts.map(o => `<option>${escapeHtml(o.label || o.value || "")}</option>`).join("");
+                                return `<select class="form-select form-select-sm" disabled><option>-- Chọn --</option>${html}</select>`;
+                            }
+                            case 10:
+                                return `<textarea class="form-control form-control-sm" rows="2" placeholder="${ph}" disabled></textarea>`;
+                            default:
+                                return `<input class="form-control form-control-sm" type="text" placeholder="${ph}" disabled>`;
+                        }
+                    }
+
+                    function escapeHtml(s) {
+                        return String(s)
+                            .replaceAll("&", "&amp;")
+                            .replaceAll("<", "&lt;")
+                            .replaceAll(">", "&gt;")
+                            .replaceAll("\"", "&quot;")
+                            .replaceAll("'", "&#39;");
+                    }
+
+                    function selectField(idx) {
+                        state.selectedIndex = idx;
+                        renderPreview();
+                        renderProperties();
+                        // focus label for faster editing
+                        setTimeout(() => {
+                            const input = el("propLabel");
+                            if (input) input.focus();
+                        }, 0);
+                    }
+
+                    function renderProperties() {
+                        const hasSel = state.selectedIndex >= 0 && state.selectedIndex < state.fields.length;
+                        el("propsDisabled").style.display = hasSel ? "none" : "block";
+                        el("propsPanel").style.display = hasSel ? "block" : "none";
+                        if (!hasSel) return;
+
+                        const f = state.fields[state.selectedIndex];
+
+                        el("propFieldType").value = String(f.fieldType ?? 1);
+                        el("propFieldCode").value = f.fieldCode ?? "";
+                        el("propLabel").value = f.label ?? "";
+                        el("propPlaceholder").value = f.placeholder ?? "";
+                        el("propHelpText").value = f.helpText ?? "";
+                        el("propRequired").checked = !!f.isRequired;
+                        el("propVisible").checked = (f.isVisible !== false);
+                        el("propColSpan").value = String(getColSpan(f));
+
+                        const isSelect = Number(f.fieldType) === 6;
+                        el("selectOptionsBox").style.display = isSelect ? "block" : "none";
+                        if (isSelect) renderOptions();
+                
+                        renderValidations();
+                        renderConditions();
+                    }
+
+                    function updateSelected(mutator) {
+                        const idx = state.selectedIndex;
+                        if (idx < 0 || idx >= state.fields.length) return;
+                        mutator(state.fields[idx]);
                         setDirty(true);
-                    });
-
-                    box.appendChild(row);
-                });
-            }
-
-            function addField(fieldType) {
-                normalizeOrders();
-                const f = {
-                    fieldCode: nextFieldCode(),
-                    fieldType: Number(fieldType),
-                    label: "Câu hỏi mới",
-                    displayOrder: state.fields.length + 1,
-                    isRequired: false,
-                    isVisible: true,
-                    defaultValue: null,
-                    placeholder: null,
-                    helpText: null,
-                    cssClass: null,
-                    propertiesJson: JSON.stringify({ colSpan: 6 }),
-                    parentFieldId: null,
-                    minOccurs: null,
-                    maxOccurs: null,
-                    validations: [],
-                    conditions: [],
-                    options: []
-                };
-                if (Number(fieldType) === 6) {
-                    f.options = [
-                        { value: "A", label: "Option A", isDefault: true, displayOrder: 1 },
-                        { value: "B", label: "Option B", isDefault: false, displayOrder: 2 }
-                    ];
-                }
-                state.fields.push(f);
-                setDirty(true);
-                selectField(state.fields.length - 1);
-            }
-
-            function moveSelected(delta) {
-                const i = state.selectedIndex;
-                if (i < 0) return;
-                const j = i + delta;
-                if (j < 0 || j >= state.fields.length) return;
-                const tmp = state.fields[i];
-                state.fields[i] = state.fields[j];
-                state.fields[j] = tmp;
-                state.selectedIndex = j;
-                normalizeOrders();
-                setDirty(true);
-                renderPreview();
-                renderProperties();
-            }
-
-            function duplicateSelected() {
-                const i = state.selectedIndex;
-                if (i < 0) return;
-                const src = state.fields[i];
-                const copy = JSON.parse(JSON.stringify(src));
-                // New entity
-                copy.id = "00000000-0000-0000-0000-000000000000";
-                copy.fieldCode = nextFieldCode();
-                copy.label = (src.label || "Câu hỏi") + " (copy)";
-                if (Array.isArray(copy.options)) {
-                    copy.options.forEach(o => o.id = "00000000-0000-0000-0000-000000000000");
-                }
-                if (Array.isArray(copy.validations)) {
-                    copy.validations.forEach(v => v.id = "00000000-0000-0000-0000-000000000000");
-                }
-                if (Array.isArray(copy.conditions)) {
-                    copy.conditions.forEach(c => c.id = "00000000-0000-0000-0000-000000000000");
-                }
-                state.fields.splice(i + 1, 0, copy);
-                normalizeOrders();
-                setDirty(true);
-                selectField(i + 1);
-            }
-
-            function deleteSelected() {
-                const i = state.selectedIndex;
-                if (i < 0) return;
-                state.fields.splice(i, 1);
-                state.selectedIndex = Math.min(i, state.fields.length - 1);
-                normalizeOrders();
-                setDirty(true);
-                renderPreview();
-                renderProperties();
-            }
-
-            function wireDragDrop() {
-                const list = el("fieldsList");
-                let dropPosition = null; // 'before' or 'after'
-
-                list.addEventListener("dragstart", (e) => {
-                    const item = e.target.closest(".df-field-item");
-                    if (!item) return;
-                    state.draggingIndex = Number(item.dataset.idx);
-                    item.classList.add("df-dragging");
-                    e.dataTransfer.effectAllowed = "move";
-                    e.dataTransfer.setData("text/plain", ""); // Required for Firefox
-                });
-
-                list.addEventListener("dragend", (e) => {
-                    const item = e.target.closest(".df-field-item");
-                    if (item) item.classList.remove("df-dragging");
-                    state.draggingIndex = null;
-                    dropPosition = null;
-                    document.querySelectorAll(".df-drop-target").forEach(x => {
-                        x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
-                    });
-                    // Remove placeholder if exists
-                    const placeholder = list.querySelector(".df-drop-placeholder");
-                    if (placeholder) placeholder.remove();
-                });
-
-                list.addEventListener("dragover", (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    
-                    const over = e.target.closest(".df-field-item");
-                    if (!over) {
-                        // Remove all drop targets if not over any item
-                        document.querySelectorAll(".df-drop-target").forEach(x => {
-                            x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
-                        });
-                        return;
+                        renderPreview();
+                        renderProperties();
                     }
-                    
-                    const overIdx = Number(over.dataset.idx);
-                    if (state.draggingIndex === overIdx) return;
-                    
-                    // Determine drop position based on mouse Y position
-                    const rect = over.getBoundingClientRect();
-                    const mouseY = e.clientY;
-                    const itemMiddle = rect.top + rect.height / 2;
-                    dropPosition = mouseY < itemMiddle ? "before" : "after";
-                    
-                    // Remove all drop targets first
-                    document.querySelectorAll(".df-drop-target").forEach(x => {
-                        x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
-                    });
-                    
-                    // Add drop target to current item
-                    over.classList.add("df-drop-target", `df-drop-${dropPosition}`);
-                });
 
-                list.addEventListener("dragleave", (e) => {
-                    // Only remove if leaving the list area, not just moving between items
-                    const relatedTarget = e.relatedTarget;
-                    if (!list.contains(relatedTarget)) {
-                        document.querySelectorAll(".df-drop-target").forEach(x => {
-                            x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                    function renderOptions() {
+                        const box = el("optionsList");
+                        box.innerHTML = "";
+                        const f = state.fields[state.selectedIndex];
+                        f.options = ensureArray(f.options);
+
+                        f.options.forEach((o, idx) => {
+                            const row = document.createElement("div");
+                            row.className = "border rounded p-2";
+
+                            const isDefault = !!o.isDefault;
+                            row.innerHTML = `
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-5">
+                                        <label class="form-label mb-1">Value</label>
+                                        <input class="form-control form-control-sm" data-k="value" value="${escapeHtml(o.value ?? "")}">
+                                    </div>
+                                    <div class="col-5">
+                                        <label class="form-label mb-1">Label</label>
+                                        <input class="form-control form-control-sm" data-k="label" value="${escapeHtml(o.label ?? "")}">
+                                    </div>
+                                    <div class="col-2">
+                                        <button class="btn btn-sm btn-outline-danger w-100" type="button" data-act="del">X</button>
+                                    </div>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="radio" name="defaultOpt" ${isDefault ? "checked" : ""} data-act="default">
+                                    <label class="form-check-label">Default</label>
+                                </div>
+                            `;
+
+                            row.querySelectorAll("input[data-k]").forEach(inp => {
+                                inp.addEventListener("input", (e) => {
+                                    const key = e.target.getAttribute("data-k");
+                                    o[key] = e.target.value;
+                                    setDirty(true);
+                                    renderErrors();
+                                });
+                            });
+                            row.querySelector("[data-act='del']").addEventListener("click", () => {
+                                f.options.splice(idx, 1);
+                                setDirty(true);
+                                renderOptions();
+                                renderErrors();
+                            });
+                            row.querySelector("[data-act='default']").addEventListener("change", () => {
+                                f.options.forEach(x => x.isDefault = false);
+                                o.isDefault = true;
+                                setDirty(true);
+                            });
+
+                            box.appendChild(row);
                         });
                     }
-                });
 
-                list.addEventListener("drop", (e) => {
-                    e.preventDefault();
-                    const over = e.target.closest(".df-field-item");
-                    if (!over) return;
+                    function renderValidations() {
+                        const box = el("validationsList");
+                        box.innerHTML = "";
+                        const f = state.fields[state.selectedIndex];
+                        f.validations = ensureArray(f.validations);
+
+                        f.validations.forEach((v, idx) => {
+                            const row = document.createElement("div");
+                            row.className = "border rounded p-2";
                     
-                    const from = state.draggingIndex;
-                    const to = Number(over.dataset.idx);
-                    if (from == null || Number.isNaN(to) || from === to) return;
+                            const ruleType = Number(v.ruleType) || 2;
+                            const ruleTypeOptions = [
+                                { value: 2, label: "Min" },
+                                { value: 3, label: "Max" },
+                                { value: 4, label: "Range" }
+                            ];
+                    
+                            row.innerHTML = `
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-4">
+                                        <label class="form-label mb-1">Rule Type</label>
+                                        <select class="form-select form-select-sm" data-k="ruleType">
+                                            ${ruleTypeOptions.map(opt => `<option value="${opt.value}" ${ruleType === opt.value ? "selected" : ""}>${opt.label}</option>`).join("")}
+                                        </select>
+                                    </div>
+                                    <div class="col-5">
+                                        <label class="form-label mb-1">Rule Value</label>
+                                        <input class="form-control form-control-sm" data-k="ruleValue" value="${escapeHtml(v.ruleValue ?? "")}" placeholder="${ruleType === 4 ? 'VD: 1,100 (min,max)' : ruleType === 2 ? 'VD: 10 (min)' : ruleType === 3 ? 'VD: 100 (max)' : ruleType === 5 ? 'VD: ^[0-9]+$ (regex)' : ''}">
+                                    </div>
+                                    <div class="col-3">
+                                        <button class="btn btn-sm btn-outline-danger w-100" type="button" data-act="del">X</button>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="form-label mb-1">Error Message</label>
+                                    <input class="form-control form-control-sm" data-k="errorMessage" value="${escapeHtml(v.errorMessage ?? "")}" placeholder="Thông báo lỗi">
+                                </div>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-6">
+                                        <label class="form-label mb-1">Priority</label>
+                                        <input type="number" class="form-control form-control-sm" data-k="priority" value="${v.priority ?? 0}" min="0">
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-check mt-3">
+                                            <input class="form-check-input" type="checkbox" data-k="isActive" ${v.isActive !== false ? "checked" : ""}>
+                                            <label class="form-check-label">Active</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
 
-                    // Calculate target index based on drop position
-                    let targetIdx = to;
-                    if (dropPosition === "after" && from < to) {
-                        targetIdx = to + 1;
-                    } else if (dropPosition === "before" && from > to) {
-                        targetIdx = to;
-                    } else if (dropPosition === "after" && from > to) {
-                        targetIdx = to + 1;
-                    } else if (dropPosition === "before" && from < to) {
-                        targetIdx = to;
+                            row.querySelectorAll("input[data-k], select[data-k]").forEach(inp => {
+                                const key = inp.getAttribute("data-k");
+                                if (inp.type === "checkbox") {
+                                    inp.addEventListener("change", (e) => {
+                                        v[key] = e.target.checked;
+                                        setDirty(true);
+                                    });
+                                } else if (inp.type === "number") {
+                                    inp.addEventListener("input", (e) => {
+                                        v[key] = Number(e.target.value) || 0;
+                                        setDirty(true);
+                                    });
+                                } else if (inp.tagName === "SELECT" && (key === "ruleType")) {
+                                    inp.addEventListener("change", (e) => {
+                                        v[key] = Number(e.target.value) || 1;
+                                        setDirty(true);
+                                    });
+                                } else {
+                                    inp.addEventListener("input", (e) => {
+                                        v[key] = e.target.value;
+                                        setDirty(true);
+                                    });
+                                }
+                            });
+                    
+                            row.querySelector("[data-act='del']").addEventListener("click", () => {
+                                f.validations.splice(idx, 1);
+                                setDirty(true);
+                                renderValidations();
+                            });
+
+                            box.appendChild(row);
+                        });
                     }
 
-                    // Ensure target index is within bounds
-                    targetIdx = Math.max(0, Math.min(targetIdx, state.fields.length - 1));
+                    function renderConditions() {
+                        const box = el("conditionsList");
+                        box.innerHTML = "";
+                        const f = state.fields[state.selectedIndex];
+                        f.conditions = ensureArray(f.conditions);
 
-                    // Move the field
-                    const moved = state.fields.splice(from, 1)[0];
-                    state.fields.splice(targetIdx, 0, moved);
-                    state.selectedIndex = targetIdx;
+                        f.conditions.forEach((c, idx) => {
+                            const row = document.createElement("div");
+                            row.className = "border rounded p-2";
+                    
+                            const conditionType = Number(c.conditionType) || 1;
+                            const conditionTypeOptions = [
+                                { value: 1, label: "Show" },
+                                { value: 2, label: "Hide" },
+                                { value: 3, label: "Enable" },
+                                { value: 4, label: "Disable" }
+                            ];
+                    
+                            row.innerHTML = `
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-4">
+                                        <label class="form-label mb-1">Condition Type</label>
+                                        <select class="form-select form-select-sm" data-k="conditionType">
+                                            ${conditionTypeOptions.map(opt => `<option value="${opt.value}" ${conditionType === opt.value ? "selected" : ""}>${opt.label}</option>`).join("")}
+                                        </select>
+                                    </div>
+                                    <div class="col-5">
+                                        <label class="form-label mb-1">Priority</label>
+                                        <input type="number" class="form-control form-control-sm" data-k="priority" value="${c.priority ?? 0}" min="0">
+                                    </div>
+                                    <div class="col-3">
+                                        <button class="btn btn-sm btn-outline-danger w-100" type="button" data-act="del">X</button>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="form-label mb-1">Expression (JSON)</label>
+                                    <textarea class="form-control form-control-sm" data-k="expression" rows="3" placeholder='{"operator":"eq","field":"FIELD_CODE","value":"X"}' style="font-family: monospace; font-size: 11px;">${escapeHtml(c.expression ?? "")}</textarea>
+                                    <div class="form-text">VD: {"operator":"eq","field":"FIELD_001","value":"Yes"} hoặc {"operator":"and","operands":[{"operator":"eq","field":"A","value":"1"},{"operator":"ne","field":"B","value":"2"}]}</div>
+                                </div>
+                            `;
+
+                            row.querySelectorAll("input[data-k], select[data-k], textarea[data-k]").forEach(inp => {
+                                const key = inp.getAttribute("data-k");
+                                if (inp.type === "number") {
+                                    inp.addEventListener("input", (e) => {
+                                        c[key] = Number(e.target.value) || 0;
+                                        setDirty(true);
+                                    });
+                                } else if (inp.tagName === "SELECT" && (key === "conditionType")) {
+                                    inp.addEventListener("change", (e) => {
+                                        c[key] = Number(e.target.value) || 1;
+                                        setDirty(true);
+                                    });
+                                } else {
+                                    inp.addEventListener("input", (e) => {
+                                        c[key] = e.target.value;
+                                        setDirty(true);
+                                    });
+                                }
+                            });
+                    
+                            row.querySelector("[data-act='del']").addEventListener("click", () => {
+                                f.conditions.splice(idx, 1);
+                                setDirty(true);
+                                renderConditions();
+                            });
+
+                            box.appendChild(row);
+                        });
+                    }
+
+                    function addField(fieldType) {
+                        normalizeOrders();
+                        const f = {
+                            fieldCode: nextFieldCode(),
+                            fieldType: Number(fieldType),
+                            label: "Câu hỏi mới",
+                            displayOrder: state.fields.length + 1,
+                            isRequired: false,
+                            isVisible: true,
+                            defaultValue: null,
+                            placeholder: null,
+                            helpText: null,
+                            cssClass: null,
+                            propertiesJson: JSON.stringify({ colSpan: 6 }),
+                            parentFieldId: null,
+                            minOccurs: null,
+                            maxOccurs: null,
+                            validations: [],
+                            conditions: [],
+                            options: []
+                        };
+                        if (Number(fieldType) === 6) {
+                            f.options = [
+                                { value: "A", label: "Option A", isDefault: true, displayOrder: 1 },
+                                { value: "B", label: "Option B", isDefault: false, displayOrder: 2 }
+                            ];
+                        }
+                        state.fields.push(f);
+                        setDirty(true);
+                        selectField(state.fields.length - 1);
+                    }
+
+                    function moveSelected(delta) {
+                        const i = state.selectedIndex;
+                        if (i < 0) return;
+                        const j = i + delta;
+                        if (j < 0 || j >= state.fields.length) return;
+                        const tmp = state.fields[i];
+                        state.fields[i] = state.fields[j];
+                        state.fields[j] = tmp;
+                        state.selectedIndex = j;
+                        normalizeOrders();
+                        setDirty(true);
+                        renderPreview();
+                        renderProperties();
+                    }
+
+                    function duplicateSelected() {
+                        const i = state.selectedIndex;
+                        if (i < 0) return;
+                        const src = state.fields[i];
+                        const copy = JSON.parse(JSON.stringify(src));
+                        // New entity
+                        copy.id = "00000000-0000-0000-0000-000000000000";
+                        copy.fieldCode = nextFieldCode();
+                        copy.label = (src.label || "Câu hỏi") + " (copy)";
+                        if (Array.isArray(copy.options)) {
+                            copy.options.forEach(o => o.id = "00000000-0000-0000-0000-000000000000");
+                        }
+                        if (Array.isArray(copy.validations)) {
+                            copy.validations.forEach(v => v.id = "00000000-0000-0000-0000-000000000000");
+                        }
+                        if (Array.isArray(copy.conditions)) {
+                            copy.conditions.forEach(c => c.id = "00000000-0000-0000-0000-000000000000");
+                        }
+                        state.fields.splice(i + 1, 0, copy);
+                        normalizeOrders();
+                        setDirty(true);
+                        selectField(i + 1);
+                    }
+
+                    function deleteSelected() {
+                        const i = state.selectedIndex;
+                        if (i < 0) return;
+                        state.fields.splice(i, 1);
+                        state.selectedIndex = Math.min(i, state.fields.length - 1);
+                        normalizeOrders();
+                        setDirty(true);
+                        renderPreview();
+                        renderProperties();
+                    }
+
+                    function wireDragDrop() {
+                        const list = el("fieldsList");
+                        let dropPosition = null; // 'before' or 'after'
+
+                        list.addEventListener("dragstart", (e) => {
+                            const item = e.target.closest(".df-field-item");
+                            if (!item) return;
+                            state.draggingIndex = Number(item.dataset.idx);
+                            item.classList.add("df-dragging");
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", ""); // Required for Firefox
+                        });
+
+                        list.addEventListener("dragend", (e) => {
+                            const item = e.target.closest(".df-field-item");
+                            if (item) item.classList.remove("df-dragging");
+                            state.draggingIndex = null;
+                            dropPosition = null;
+                            document.querySelectorAll(".df-drop-target").forEach(x => {
+                                x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                            });
+                            // Remove placeholder if exists
+                            const placeholder = list.querySelector(".df-drop-placeholder");
+                            if (placeholder) placeholder.remove();
+                        });
+
+                        list.addEventListener("dragover", (e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                    
+                            const over = e.target.closest(".df-field-item");
+                            if (!over) {
+                                // Remove all drop targets if not over any item
+                                document.querySelectorAll(".df-drop-target").forEach(x => {
+                                    x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                                });
+                                return;
+                            }
+                    
+                            const overIdx = Number(over.dataset.idx);
+                            if (state.draggingIndex === overIdx) return;
+                    
+                            // Determine drop position based on mouse Y position
+                            const rect = over.getBoundingClientRect();
+                            const mouseY = e.clientY;
+                            const itemMiddle = rect.top + rect.height / 2;
+                            dropPosition = mouseY < itemMiddle ? "before" : "after";
+                    
+                            // Remove all drop targets first
+                            document.querySelectorAll(".df-drop-target").forEach(x => {
+                                x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                            });
+                    
+                            // Add drop target to current item
+                            over.classList.add("df-drop-target", `df-drop-${dropPosition}`);
+                        });
+
+                        list.addEventListener("dragleave", (e) => {
+                            // Only remove if leaving the list area, not just moving between items
+                            const relatedTarget = e.relatedTarget;
+                            if (!list.contains(relatedTarget)) {
+                                document.querySelectorAll(".df-drop-target").forEach(x => {
+                                    x.classList.remove("df-drop-target", "df-drop-before", "df-drop-after");
+                                });
+                            }
+                        });
+
+                        list.addEventListener("drop", (e) => {
+                            e.preventDefault();
+                            const over = e.target.closest(".df-field-item");
+                            if (!over) return;
+                    
+                            const from = state.draggingIndex;
+                            const to = Number(over.dataset.idx);
+                            if (from == null || Number.isNaN(to) || from === to) return;
+
+                            // Calculate target index based on drop position
+                            let targetIdx = to;
+                            if (dropPosition === "after" && from < to) {
+                                targetIdx = to + 1;
+                            } else if (dropPosition === "before" && from > to) {
+                                targetIdx = to;
+                            } else if (dropPosition === "after" && from > to) {
+                                targetIdx = to + 1;
+                            } else if (dropPosition === "before" && from < to) {
+                                targetIdx = to;
+                            }
+
+                            // Ensure target index is within bounds
+                            targetIdx = Math.max(0, Math.min(targetIdx, state.fields.length - 1));
+
+                            // Move the field
+                            const moved = state.fields.splice(from, 1)[0];
+                            state.fields.splice(targetIdx, 0, moved);
+                            state.selectedIndex = targetIdx;
+                            normalizeOrders();
+                            setDirty(true);
+                            renderPreview();
+                            renderProperties();
+                        });
+                    }
+
+                    function wireEvents() {
+                        document.querySelectorAll("#toolbox [data-type]").forEach(btn => {
+                            btn.addEventListener("click", () => addField(btn.getAttribute("data-type")));
+                        });
+
+                        el("propFieldType").addEventListener("change", (e) => {
+                            updateSelected(f => {
+                                f.fieldType = Number(e.target.value);
+                                if (f.fieldType !== 6) f.options = [];
+                                if (f.fieldType === 6 && (!f.options || f.options.length === 0)) {
+                                    f.options = [{ value: "A", label: "Option A", isDefault: true, displayOrder: 1 }];
+                                }
+                            });
+                        });
+                        el("propFieldCode").addEventListener("input", (e) => updateSelected(f => { f.fieldCode = e.target.value; f._codeTouched = true; }));
+                        el("propLabel").addEventListener("input", (e) => updateSelected(f => {
+                            const newLabel = e.target.value;
+                            f.label = newLabel;
+                            // Auto-generate fieldCode only if user hasn't edited it manually
+                            if (!f._codeTouched) {
+                                const base = labelToCode(newLabel);
+                                // Ensure uniqueness
+                                let code = base;
+                                const existing = new Set(state.fields.map(x => normalizeCode(x.fieldCode)));
+                                existing.delete(normalizeCode(f.fieldCode)); // allow overwrite self
+                                let n = 2;
+                                while (existing.has(code)) {
+                                    code = `${base}_${n++}`;
+                                }
+                                f.fieldCode = code;
+                            }
+                        }));
+                        el("propPlaceholder").addEventListener("input", (e) => updateSelected(f => f.placeholder = e.target.value));
+                        el("propHelpText").addEventListener("input", (e) => updateSelected(f => f.helpText = e.target.value));
+                        el("propRequired").addEventListener("change", (e) => updateSelected(f => f.isRequired = e.target.checked));
+                        el("propVisible").addEventListener("change", (e) => updateSelected(f => f.isVisible = e.target.checked));
+                        el("propColSpan").addEventListener("change", (e) => updateSelected(f => setColSpan(f, e.target.value)));
+
+                        el("btnAddOption").addEventListener("click", () => {
+                            updateSelected(f => {
+                                f.options = ensureArray(f.options);
+                                f.options.push({ value: "", label: "", isDefault: f.options.length === 0, displayOrder: f.options.length + 1 });
+                            });
+                        });
+
+                        el("btnAddValidation").addEventListener("click", () => {
+                            updateSelected(f => {
+                                f.validations = ensureArray(f.validations);
+                                f.validations.push({ 
+                                    ruleType: 1, 
+                                    ruleValue: "", 
+                                    errorMessage: "Trường này là bắt buộc", 
+                                    priority: f.validations.length, 
+                                    isActive: true 
+                                });
+                            });
+                        });
+
+                        el("btnAddCondition").addEventListener("click", () => {
+                            updateSelected(f => {
+                                f.conditions = ensureArray(f.conditions);
+                                f.conditions.push({ 
+                                    conditionType: 1, 
+                                    expression: '{"operator":"eq","field":"FIELD_CODE","value":"X"}', 
+                                    priority: f.conditions.length 
+                                });
+                            });
+                        });
+
+                        el("btnMoveUp").addEventListener("click", () => moveSelected(-1));
+                        el("btnMoveDown").addEventListener("click", () => moveSelected(1));
+                        el("btnDuplicate").addEventListener("click", () => duplicateSelected());
+                        el("btnDelete").addEventListener("click", () => deleteSelected());
+
+                        el("btnSave").addEventListener("click", () => {
+                            const errs = validateAll();
+                            if (errs.length > 0) {
+                                renderErrors();
+                                return;
+                            }
+                            state.isSubmitting = true;
+                            setDirty(false);
+                            normalizeOrders();
+                    
+                            // Normalize numeric fields before serialization
+                            normalizeNumericFields();
+                    
+                            el("fieldsJson").value = JSON.stringify(state.fields);
+                            el("saveForm").submit();
+                        });
+
+                        el("toolboxSearch")?.addEventListener("input", (e) => {
+                            const q = String(e.target.value || "").trim().toLowerCase();
+                            document.querySelectorAll("#toolbox [data-type]").forEach(btn => {
+                                const text = (btn.textContent || "").toLowerCase();
+                                btn.style.display = !q || text.includes(q) ? "" : "none";
+                            });
+                        });
+
+                        const formSelect = el("formSelect");
+                        const versionSelect = el("versionSelect");
+
+                        // UX: when user selects a form on the initial Designer page (no ?code=),
+                        // auto-load versions to enable version dropdown (instead of staying disabled).
+
+                        async function fetchJson(url) {
+                            try {
+                                const res = await fetch(url, { 
+                                    headers: { "Accept": "application/json" },
+                                    mode: 'cors',
+                                    credentials: 'omit'
+                                });
+                                const text = await res.text();
+                                if (!res.ok) throw new Error(`${res.status} ${res.statusText}\n${text}`);
+                                return text ? JSON.parse(text) : null;
+                            } catch (error) {
+                                console.error("Fetch error:", error);
+                                throw error;
+                            }
+                        }
+
+                        function navigateToDesigner(code, versionId) {
+                            if (!code) return;
+                            const url = versionId
+                                ? `/Forms/Designer?code=${encodeURIComponent(code)}&versionId=${encodeURIComponent(versionId)}`
+                                : `/Forms/Designer?code=${encodeURIComponent(code)}`;
+                            window.location.href = url;
+                        }
+
+                        let isLoadingVersions = false; // Flag để tránh gọi nhiều lần
+                
+                        // Handler cho version select change - định nghĩa trước để có thể dùng trong loadVersionsForSelectedForm
+                        function handleVersionChange() {
+                            const code = formSelect?.value;
+                            const vid = versionSelect?.value;
+                    
+                            // Nếu không có code hoặc vid thì không làm gì
+                            if (!code) return;
+                            if (!vid || vid === "") {
+                                // Nếu user chọn "-- Chọn --" thì không navigate
+                                return;
+                            }
+                    
+                            // Kiểm tra nếu đang có thay đổi chưa lưu
+                            if (state && state.dirty) {
+                                if (!confirm("Bạn có thay đổi chưa lưu. Bạn có muốn chuyển version không? (Thay đổi sẽ bị mất)")) {
+                                    // User hủy, reset về version cũ
+                                    const currentVersionId = '@(Model.VersionId?.ToString() ?? "")';
+                                    // Tạm thời remove listener để tránh trigger lại
+                                    versionSelect.removeEventListener("change", handleVersionChange);
+                                    if (currentVersionId) {
+                                        versionSelect.value = currentVersionId;
+                                    } else {
+                                        versionSelect.value = "";
+                                    }
+                                    // Restore listener (chỉ add nếu chưa có)
+                                    setTimeout(() => {
+                                        if (!versionSelect.hasAttribute('data-listener-attached')) {
+                                            versionSelect.addEventListener("change", handleVersionChange);
+                                            versionSelect.setAttribute('data-listener-attached', 'true');
+                                        }
+                                    }, 100);
+                                    return;
+                                }
+                            }
+                    
+                            // User đã chọn version, navigate ngay
+                            navigateToDesigner(code, vid);
+                        }
+
+                        async function loadVersionsForSelectedForm(shouldNavigate = false) {
+                            if (!formSelect || !versionSelect || isLoadingVersions) return;
+                    
+                            const code = formSelect.value;
+                            const opt = formSelect.selectedOptions && formSelect.selectedOptions[0];
+                            const formId = opt?.dataset?.formId;
+
+                            if (!code || !formId) {
+                                versionSelect.innerHTML = `<option value="">-- Chọn --</option>`;
+                                versionSelect.disabled = true;
+                                return;
+                            }
+
+                            isLoadingVersions = true;
+                            versionSelect.disabled = true;
+                            versionSelect.innerHTML = `<option value="">Đang tải version...</option>`;
+
+                            try {
+                                const versions = await fetchJson(`${API_BASE_URL}/api/forms/${encodeURIComponent(formId)}/versions`) || [];
+                                versions.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+
+                                const optionsHtml = [`<option value="">-- Chọn --</option>`]
+                                    .concat(versions.map(v => {
+                                        const label = `${v.version}${v.isActive ? " (Active)" : ""}`;
+                                        return `<option value="${v.id}">${escapeHtml(label)}</option>`;
+                                    }))
+                                    .join("");
+
+                                versionSelect.innerHTML = optionsHtml;
+
+                                // Preselect version hiện tại nếu có, nếu không thì chọn active hoặc latest
+                                // Tạm thời remove event listener để tránh trigger change khi set value programmatically
+                                const currentVersionId = '@(Model.VersionId?.ToString() ?? "")';
+                                if (versionSelect.hasAttribute('data-listener-attached')) {
+                                    versionSelect.removeEventListener("change", handleVersionChange);
+                                    versionSelect.removeAttribute('data-listener-attached');
+                                }
+                        
+                                if (currentVersionId && versions.some(v => String(v.id) === currentVersionId)) {
+                                    versionSelect.value = currentVersionId;
+                                } else {
+                                    const active = versions.find(v => v.isActive);
+                                    if (active?.id) versionSelect.value = active.id;
+                                    else if (versions[0]?.id) versionSelect.value = versions[0].id;
+                                }
+                        
+                                // Restore event listener sau một chút delay
+                                setTimeout(() => {
+                                    if (!versionSelect.hasAttribute('data-listener-attached')) {
+                                        versionSelect.addEventListener("change", handleVersionChange);
+                                        versionSelect.setAttribute('data-listener-attached', 'true');
+                                    }
+                                }, 50);
+
+                                // Luôn enable versionSelect để user có thể chọn version khác
+                                versionSelect.disabled = versions.length === 0;
+
+                                // Chỉ navigate nếu shouldNavigate = true (khi user thay đổi form)
+                                if (shouldNavigate && !versionSelect.disabled && versionSelect.value) {
+                                    navigateToDesigner(code, versionSelect.value);
+                                }
+                            } catch (e) {
+                                console.error("Failed to load versions", e);
+                                versionSelect.innerHTML = `<option value="">Lỗi tải version (xem Console)</option>`;
+                                versionSelect.disabled = true;
+                            } finally {
+                                isLoadingVersions = false;
+                            }
+                        }
+
+                        // Chỉ load versions khi user thay đổi form select
+                        formSelect?.addEventListener("change", () => {
+                            loadVersionsForSelectedForm(true); // true = should navigate
+                        });
+                
+                        // Gắn event listener cho version select (chỉ gắn 1 lần)
+                        if (versionSelect && !versionSelect.hasAttribute('data-listener-attached')) {
+                            versionSelect.addEventListener("change", handleVersionChange);
+                            versionSelect.setAttribute('data-listener-attached', 'true');
+                        }
+                
+                        // Load versions khi page load để đảm bảo dropdown luôn có dữ liệu
+                        if (formSelect?.value) {
+                            // Load versions nhưng không navigate (để user có thể chọn version)
+                            loadVersionsForSelectedForm(false);
+                        }
+
+                        // Prevent "Leave site?" popup when user explicitly submits a form (Save / Activate / Create...)
+                        document.querySelectorAll("form").forEach(f => {
+                            f.addEventListener("submit", () => {
+                                state.isSubmitting = true;
+                                setDirty(false);
+                            });
+                        });
+
+                        window.addEventListener("beforeunload", (e) => {
+                            if (!state.dirty || state.isSubmitting) return;
+                            e.preventDefault();
+                            e.returnValue = "";
+                        });
+                    }
+
                     normalizeOrders();
-                    setDirty(true);
+                    wireEvents();
+                    wireDragDrop();
                     renderPreview();
                     renderProperties();
-                });
-            }
-
-            function wireEvents() {
-                document.querySelectorAll("#toolbox [data-type]").forEach(btn => {
-                    btn.addEventListener("click", () => addField(btn.getAttribute("data-type")));
-                });
-
-                el("propFieldType").addEventListener("change", (e) => {
-                    updateSelected(f => {
-                        f.fieldType = Number(e.target.value);
-                        if (f.fieldType !== 6) f.options = [];
-                        if (f.fieldType === 6 && (!f.options || f.options.length === 0)) {
-                            f.options = [{ value: "A", label: "Option A", isDefault: true, displayOrder: 1 }];
-                        }
-                    });
-                });
-                el("propFieldCode").addEventListener("input", (e) => updateSelected(f => { f.fieldCode = e.target.value; f._codeTouched = true; }));
-                el("propLabel").addEventListener("input", (e) => updateSelected(f => {
-                    const newLabel = e.target.value;
-                    f.label = newLabel;
-                    // Auto-generate fieldCode only if user hasn't edited it manually
-                    if (!f._codeTouched) {
-                        const base = labelToCode(newLabel);
-                        // Ensure uniqueness
-                        let code = base;
-                        const existing = new Set(state.fields.map(x => normalizeCode(x.fieldCode)));
-                        existing.delete(normalizeCode(f.fieldCode)); // allow overwrite self
-                        let n = 2;
-                        while (existing.has(code)) {
-                            code = `${base}_${n++}`;
-                        }
-                        f.fieldCode = code;
-                    }
-                }));
-                el("propPlaceholder").addEventListener("input", (e) => updateSelected(f => f.placeholder = e.target.value));
-                el("propHelpText").addEventListener("input", (e) => updateSelected(f => f.helpText = e.target.value));
-                el("propRequired").addEventListener("change", (e) => updateSelected(f => f.isRequired = e.target.checked));
-                el("propVisible").addEventListener("change", (e) => updateSelected(f => f.isVisible = e.target.checked));
-                el("propColSpan").addEventListener("change", (e) => updateSelected(f => setColSpan(f, e.target.value)));
-
-                el("btnAddOption").addEventListener("click", () => {
-                    updateSelected(f => {
-                        f.options = ensureArray(f.options);
-                        f.options.push({ value: "", label: "", isDefault: f.options.length === 0, displayOrder: f.options.length + 1 });
-                    });
-                });
-
-                el("btnMoveUp").addEventListener("click", () => moveSelected(-1));
-                el("btnMoveDown").addEventListener("click", () => moveSelected(1));
-                el("btnDuplicate").addEventListener("click", () => duplicateSelected());
-                el("btnDelete").addEventListener("click", () => deleteSelected());
-
-                el("btnSave").addEventListener("click", () => {
-                    const errs = validateAll();
-                    if (errs.length > 0) {
-                        renderErrors();
-                        return;
-                    }
-                    state.isSubmitting = true;
-                    setDirty(false);
-                    normalizeOrders();
-                    el("fieldsJson").value = JSON.stringify(state.fields);
-                    el("saveForm").submit();
-                });
-
-                el("toolboxSearch")?.addEventListener("input", (e) => {
-                    const q = String(e.target.value || "").trim().toLowerCase();
-                    document.querySelectorAll("#toolbox [data-type]").forEach(btn => {
-                        const text = (btn.textContent || "").toLowerCase();
-                        btn.style.display = !q || text.includes(q) ? "" : "none";
-                    });
-                });
-
-                const formSelect = el("formSelect");
-                const versionSelect = el("versionSelect");
-
-                // UX: when user selects a form on the initial Designer page (no ?code=),
-                // auto-load versions to enable version dropdown (instead of staying disabled).
-
-                async function fetchJson(url) {
-                    try {
-                        const res = await fetch(url, { 
-                            headers: { "Accept": "application/json" },
-                            mode: 'cors',
-                            credentials: 'omit'
-                        });
-                        const text = await res.text();
-                        if (!res.ok) throw new Error(`${res.status} ${res.statusText}\n${text}`);
-                        return text ? JSON.parse(text) : null;
-                    } catch (error) {
-                        console.error("Fetch error:", error);
-                        throw error;
-                    }
-                }
-
-                function navigateToDesigner(code, versionId) {
-                    if (!code) return;
-                    const url = versionId
-                        ? `/Forms/Designer?code=${encodeURIComponent(code)}&versionId=${encodeURIComponent(versionId)}`
-                        : `/Forms/Designer?code=${encodeURIComponent(code)}`;
-                    window.location.href = url;
-                }
-
-                let isLoadingVersions = false; // Flag để tránh gọi nhiều lần
-
-                async function loadVersionsForSelectedForm(shouldNavigate = false) {
-                    if (!formSelect || !versionSelect || isLoadingVersions) return;
-                    
-                    const code = formSelect.value;
-                    const opt = formSelect.selectedOptions && formSelect.selectedOptions[0];
-                    const formId = opt?.dataset?.formId;
-
-                    if (!code || !formId) {
-                        versionSelect.innerHTML = `<option value="">-- Chọn --</option>`;
-                        versionSelect.disabled = true;
-                        return;
-                    }
-
-                    isLoadingVersions = true;
-                    versionSelect.disabled = true;
-                    versionSelect.innerHTML = `<option value="">Đang tải version...</option>`;
-
-                    try {
-                        const versions = await fetchJson(`${API_BASE_URL}/api/forms/${encodeURIComponent(formId)}/versions`) || [];
-                        versions.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
-
-                        const optionsHtml = [`<option value="">-- Chọn --</option>`]
-                            .concat(versions.map(v => {
-                                const label = `${v.version}${v.isActive ? " (Active)" : ""}`;
-                                return `<option value="${v.id}">${escapeHtml(label)}</option>`;
-                            }))
-                            .join("");
-
-                        versionSelect.innerHTML = optionsHtml;
-
-                        // Preselect active, otherwise latest
-                        const active = versions.find(v => v.isActive);
-                        if (active?.id) versionSelect.value = active.id;
-                        else if (versions[0]?.id) versionSelect.value = versions[0].id;
-
-                        // Chỉ enable nếu chưa có metadata (chưa load form)
-                        // Nếu đã có metadata, giữ disabled để không cho thay đổi
-                        versionSelect.disabled = versions.length === 0 || hasMetadata;
-
-                        // Chỉ navigate nếu shouldNavigate = true (khi user thay đổi form)
-                        if (shouldNavigate && !versionSelect.disabled && versionSelect.value) {
-                            navigateToDesigner(code, versionSelect.value);
-                        }
-                    } catch (e) {
-                        console.error("Failed to load versions", e);
-                        versionSelect.innerHTML = `<option value="">Lỗi tải version (xem Console)</option>`;
-                        versionSelect.disabled = true;
-                    } finally {
-                        isLoadingVersions = false;
-                    }
-                }
-
-                // Chỉ load versions khi user thay đổi form select
-                formSelect?.addEventListener("change", () => {
-                    loadVersionsForSelectedForm(true); // true = should navigate
-                });
-                
-                versionSelect?.addEventListener("change", () => {
-                    const code = formSelect?.value;
-                    const vid = versionSelect?.value;
-                    if (!code) return;
-                    // User đã chọn version, navigate ngay
-                    navigateToDesigner(code, vid || null);
-                });
-                
-                // Chỉ load versions khi form select disabled và chưa có metadata (lần đầu load)
-                @if (Model.Metadata == null)
-                {
-                    <text>
-                    if (versionSelect?.disabled && formSelect?.value) {
-                        // Chỉ load nếu chưa có metadata và có form được chọn
-                        loadVersionsForSelectedForm(false); // false = không navigate (để user chọn version)
-                    }
-                    </text>
-                }
-
-                // Prevent "Leave site?" popup when user explicitly submits a form (Save / Activate / Create...)
-                document.querySelectorAll("form").forEach(f => {
-                    f.addEventListener("submit", () => {
-                        state.isSubmitting = true;
-                        setDirty(false);
-                    });
-                });
-
-                window.addEventListener("beforeunload", (e) => {
-                    if (!state.dirty || state.isSubmitting) return;
-                    e.preventDefault();
-                    e.returnValue = "";
-                });
-            }
-
-            normalizeOrders();
-            wireEvents();
-            wireDragDrop();
-            renderPreview();
-            renderProperties();
-        </script>
+                </script>
     }
 </div>
 

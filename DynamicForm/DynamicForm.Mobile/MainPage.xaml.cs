@@ -1,4 +1,4 @@
-﻿using DynamicForm.Mobile.Models;
+using DynamicForm.Mobile.Models;
 using DynamicForm.Mobile.ViewModels;
 
 namespace DynamicForm.Mobile;
@@ -15,7 +15,7 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         _vm = vm;
         BindingContext = _vm;
-        
+
         // Subscribe to Fields collection changes
         _vm.Fields.CollectionChanged += (s, e) =>
         {

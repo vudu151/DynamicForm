@@ -12,7 +12,7 @@ Table Forms {
   Name nvarchar(200) [not null, note: 'Form display name']
   Description nvarchar(500) [note: 'Form description (nullable)']
   Status int [not null, default: 0, note: '0=Draft, 1=Active, 2=Inactive']
-  CurrentVersionId int [ref: > FormVersions.Id, note: 'Current active version (nullable)']
+  CurrentVersionId int [ref: - FormVersions.Id, unique, note: 'Current active version (nullable) - One-to-One relationship']
   CreatedDate datetime2 [not null, default: `GETUTCDATE()`]
   CreatedBy nvarchar(100) [not null, default: '']
   ModifiedDate datetime2

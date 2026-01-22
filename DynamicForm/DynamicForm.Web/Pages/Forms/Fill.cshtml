@@ -8,150 +8,551 @@
 <div class="container mt-4">
     @if (Model.Metadata != null)
     {
-        <h2>@Model.Metadata.Form.Name</h2>
-        @if (!string.IsNullOrEmpty(Model.Metadata.Form.Description))
-        {
-            <p class="text-muted">@Model.Metadata.Form.Description</p>
-        }
+            <h2>@Model.Metadata.Form.Name</h2>
+            @if (!string.IsNullOrEmpty(Model.Metadata.Form.Description))
+            {
+                    <p class="text-muted">@Model.Metadata.Form.Description</p>
+            }
 
-        <form method="post" id="dynamicForm">
-            <input type="hidden" name="Code" value="@Model.Code" />
-            <input type="hidden" name="FormVersionId" value="@Model.FormVersionId" />
-            <div class="row">
-                @foreach (var field in Model.Metadata.Fields.Where(f => f.IsVisible).OrderBy(f => f.DisplayOrder))
-                {
-                    <div class="@Model.GetFieldContainerCss(field)">
-                        <label for="@field.FieldCode" class="form-label">
-                            @field.Label
-                            @if (field.IsRequired)
-                            {
-                                <span class="text-danger">*</span>
-                            }
-                        </label>
-
-                        @switch (field.FieldType)
-                        {
-                            case 1: // Text
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="@field.FieldCode" 
-                                       name="FormData[@field.FieldCode]" 
-                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
-                                       placeholder="@field.Placeholder"
-                                       @(field.IsRequired ? "required" : "") />
-                                break;
-
-                            case 2: // Number
-                                <input type="number" 
-                                       class="form-control" 
-                                       id="@field.FieldCode" 
-                                       name="FormData[@field.FieldCode]" 
-                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
-                                       placeholder="@field.Placeholder"
-                                       @(field.IsRequired ? "required" : "") />
-                                break;
-
-                            case 3: // Date
-                                <input type="date" 
-                                       class="form-control" 
-                                       id="@field.FieldCode" 
-                                       name="FormData[@field.FieldCode]" 
-                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
-                                       @(field.IsRequired ? "required" : "") />
-                                break;
-
-                            case 6: // Select
-                                <select class="form-select" 
-                                        id="@field.FieldCode" 
-                                        name="FormData[@field.FieldCode]"
-                                        @(field.IsRequired ? "required" : "")>
-                                    <option value="">-- Chọn --</option>
-                                    @{
-                                        var hasValue = Model.FormData.ContainsKey(field.FieldCode) && Model.FormData[field.FieldCode] != null;
-                                        var selectedValue = hasValue ? Model.FormData[field.FieldCode] : null;
-                                    }
-                                    @foreach (var option in field.Options.OrderBy(o => o.DisplayOrder).ThenBy(o => o.Label))
+            <form method="post" id="dynamicForm">
+                <input type="hidden" name="Code" value="@Model.Code" />
+                <input type="hidden" name="FormVersionId" value="@Model.FormVersionId" />
+                <div class="row">
+                    @foreach (var field in Model.Metadata.Fields.Where(f => f.IsVisible).OrderBy(f => f.DisplayOrder))
+                    {
+                            <div class="@Model.GetFieldContainerCss(field)" data-field-code="@field.FieldCode">
+                                <label for="@field.FieldCode" class="form-label">
+                                    @field.Label
+                                    @if (field.IsRequired)
                                     {
-                                        var isSelected = hasValue
-                                            ? selectedValue == option.Value
-                                            : option.IsDefault;
-                                        <option value="@option.Value" selected="@isSelected">
-                                            @option.Label
-                                        </option>
+                                            <span class="text-danger">*</span>
                                     }
-                                </select>
-                                break;
+                                </label>
 
-                            case 10: // TextArea
-                                <textarea class="form-control" 
-                                          id="@field.FieldCode" 
-                                          name="FormData[@field.FieldCode]" 
-                                          rows="3"
-                                          placeholder="@field.Placeholder"
-                                          @(field.IsRequired ? "required" : "")>@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)</textarea>
-                                break;
+                                @switch (field.FieldType)
+                                {
+                                        case 1: // Text
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="@field.FieldCode" 
+                                                           name="FormData[@field.FieldCode]" 
+                                                           value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                                           placeholder="@field.Placeholder"
+                                                           @(field.IsRequired ? "required" : "") />
+                                                break;
 
-                            default:
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="@field.FieldCode" 
-                                       name="FormData[@field.FieldCode]" 
-                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
-                                       placeholder="@field.Placeholder"
-                                       @(field.IsRequired ? "required" : "") />
-                                break;
-                        }
+                                        case 2: // Number
+                                                    <input type="number" 
+                                                           class="form-control" 
+                                                           id="@field.FieldCode" 
+                                                           name="FormData[@field.FieldCode]" 
+                                                           value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                                           placeholder="@field.Placeholder"
+                                                           @(field.IsRequired ? "required" : "") />
+                                                break;
 
-                        @if (!string.IsNullOrEmpty(field.HelpText))
-                        {
-                            <small class="form-text text-muted">@field.HelpText</small>
-                        }
+                                        case 3: // Date
+                                                    <input type="date" 
+                                                           class="form-control" 
+                                                           id="@field.FieldCode" 
+                                                           name="FormData[@field.FieldCode]" 
+                                                           value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                                           @(field.IsRequired ? "required" : "") />
+                                                break;
+
+                                        case 6: // Select
+                                                    <select class="form-select" 
+                                                            id="@field.FieldCode" 
+                                                            name="FormData[@field.FieldCode]"
+                                                            @(field.IsRequired ? "required" : "")>
+                                                        <option value="">-- Chọn --</option>
+                                                    @{
+                                                            var hasValue = Model.FormData.ContainsKey(field.FieldCode) && Model.FormData[field.FieldCode] != null;
+                                                            var selectedValue = hasValue ? Model.FormData[field.FieldCode] : null;
+                                                    }
+                                                    @foreach (var option in field.Options.OrderBy(o => o.DisplayOrder).ThenBy(o => o.Label))
+                                                    {
+                                                            var isSelected = hasValue
+                                                                    ? selectedValue == option.Value
+                                                                    : option.IsDefault;
+                                                            <option value="@option.Value" selected="@isSelected">
+                                                                @option.Label
+                                                            </option>
+                                                    }
+                                                </select>
+                                                break;
+
+                                        case 10: // TextArea
+                                                     <textarea class="form-control" 
+                                                               id="@field.FieldCode" 
+                                                               name="FormData[@field.FieldCode]" 
+                                                               rows="3"
+                                                               placeholder="@field.Placeholder"
+                                                               @(field.IsRequired ? "required" : "")>@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)</textarea>
+                                                break;
+
+                                        default:
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="@field.FieldCode" 
+                                                       name="FormData[@field.FieldCode]" 
+                                                       value="@(Model.FormData.ContainsKey(field.FieldCode) ? Model.FormData[field.FieldCode] : field.DefaultValue)"
+                                                       placeholder="@field.Placeholder"
+                                                       @(field.IsRequired ? "required" : "") />
+                                                break;
+                                }
+
+                                @if (!string.IsNullOrEmpty(field.HelpText))
+                                {
+                                        <small class="form-text text-muted">@field.HelpText</small>
+                                }
+                                <div class="invalid-feedback" id="error-@field.FieldCode"></div>
+                            </div>
+                    }
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Lưu Form</button>
+                    <a href="/Forms" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+
+            @if (TempData["ErrorDetails"] != null)
+            {
+                    <div class="alert alert-warning mt-3">
+                        Có lỗi khi gọi API. Mở DevTools (F12) để xem chi tiết trong Console.
                     </div>
-                }
-            </div>
+                    <script>
+                        console.error("Save form failed (server details):\n" + @Html.Raw(JsonSerializer.Serialize(TempData["ErrorDetails"]?.ToString())));
+                    </script>
+            }
 
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">Lưu Form</button>
-                <a href="/Forms" class="btn btn-secondary">Hủy</a>
-            </div>
-        </form>
-
-        @if (TempData["ErrorDetails"] != null)
-        {
-            <div class="alert alert-warning mt-3">
-                Có lỗi khi gọi API. Mở DevTools (F12) để xem chi tiết trong Console.
-            </div>
             <script>
-                console.error("Save form failed (server details):\n" + @Html.Raw(JsonSerializer.Serialize(TempData["ErrorDetails"]?.ToString())));
-            </script>
-        }
+                (function () {
+                    const form = document.getElementById("dynamicForm");
+                    if (!form) return;
 
-        <script>
-            (function () {
-                const form = document.getElementById("dynamicForm");
-                if (!form) return;
-                form.addEventListener("submit", function () {
-                    try {
-                        const fd = new FormData(form);
-                        const payload = { code: fd.get("Code"), formVersionId: fd.get("FormVersionId"), data: {} };
-                        for (const [k, v] of fd.entries()) {
-                            if (k.startsWith("FormData[") && k.endsWith("]")) {
-                                const fieldCode = k.substring("FormData[".length, k.length - 1);
-                                payload.data[fieldCode] = v;
+                    // Load metadata from server
+                    const metadata = @Html.Raw(JsonSerializer.Serialize(Model.Metadata));
+                    const fields = metadata?.Fields || Array();
+                    const fieldMap = {};
+                    fields.forEach(f => {
+                        fieldMap[f.FieldCode] = f;
+                    });
+
+                    // Validation functions
+                    function validateField(fieldCode, value) {
+                        const field = fieldMap[fieldCode];
+                        if (!field || !field.Validations || field.Validations.length === 0) {
+                            return null;
+                        }
+
+                        // Sort by priority
+                        const validations = field.Validations
+                            .filter(v => v.IsActive)
+                            .sort((a, b) => a.Priority - b.Priority);
+
+                        for (const validation of validations) {
+                            const error = validateRule(validation, value, field);
+                            if (error) {
+                                return error;
                             }
                         }
-                        console.log("Submitting form payload:", payload);
-                    } catch (e) {
-                        console.error("Failed to log submit payload", e);
+
+                        return null;
                     }
-                });
-            })();
-        </script>
+
+                    function validateRule(validation, value, field) {
+                        const ruleType = validation.RuleType;
+                        const ruleValue = validation.RuleValue;
+                        const errorMessage = validation.ErrorMessage;
+
+                        // Convert value to appropriate type
+                        const numValue = field.FieldType === 2 ? parseFloat(value) : null;
+                        const strValue = value?.toString().trim() || '';
+
+                        switch (ruleType) {
+                            case 1: // Required
+                                if (!strValue) {
+                                    return errorMessage || 'Trường này là bắt buộc';
+                                }
+                                break;
+                            case 2: // Min
+                                if (numValue !== null && ruleValue) {
+                                    const min = parseFloat(ruleValue);
+                                    if (isNaN(numValue) || numValue < min) {
+                                        return errorMessage || `Giá trị phải lớn hơn hoặc bằng ${min}`;
+                                    }
+                                } else if (strValue && ruleValue) {
+                                    const min = parseInt(ruleValue);
+                                    if (strValue.length < min) {
+                                        return errorMessage || `Độ dài phải ít nhất ${min} ký tự`;
+                                    }
+                                }
+                                break;
+                            case 3: // Max
+                                if (numValue !== null && ruleValue) {
+                                    const max = parseFloat(ruleValue);
+                                    if (isNaN(numValue) || numValue > max) {
+                                        return errorMessage || `Giá trị phải nhỏ hơn hoặc bằng ${max}`;
+                                    }
+                                } else if (strValue && ruleValue) {
+                                    const max = parseInt(ruleValue);
+                                    if (strValue.length > max) {
+                                        return errorMessage || `Độ dài không được vượt quá ${max} ký tự`;
+                                    }
+                                }
+                                break;
+                            case 4: // Range
+                                if (numValue !== null && ruleValue) {
+                                    const parts = ruleValue.split(',').map(v => parseFloat(v.trim()));
+                                    const min = parts[0];
+                                    const max = parts[1];
+                                    if (isNaN(numValue) || numValue < min || numValue > max) {
+                                        return errorMessage || `Giá trị phải trong khoảng ${min} - ${max}`;
+                                    }
+                                }
+                                break;
+                            case 5: // Regex
+                                if (strValue && ruleValue) {
+                                    try {
+                                        const regex = new RegExp(ruleValue);
+                                        if (!regex.test(strValue)) {
+                                            return errorMessage || 'Giá trị không đúng định dạng';
+                                        }
+                                    } catch (e) {
+                                        console.error('Invalid regex pattern:', ruleValue);
+                                    }
+                                }
+                                break;
+                        }
+
+                        return null;
+                    }
+
+                    // Conditional logic functions
+                    function evaluateCondition(condition, formData) {
+                        try {
+                            const expression = JSON.parse(condition.Expression);
+                            return evaluateExpression(expression, formData);
+                        } catch (e) {
+                            console.error('Error parsing condition expression:', condition.Expression, e);
+                            return false;
+                        }
+                    }
+
+                    function evaluateExpression(expr, formData) {
+                        if (typeof expr === 'string') {
+                            return expr;
+                        }
+
+                        if (typeof expr !== 'object' || expr === null) {
+                            return false;
+                        }
+
+                        // Support common operators: eq, ne, gt, gte, lt, lte, contains, in
+                        const operator = expr.operator || expr.op;
+                        // Hỗ trợ cả field (lowercase) và Field (uppercase)
+                        const field = expr.field || expr.Field || expr.fieldCode || expr.FieldCode;
+                        const value = expr.value || expr.Value;
+                        // Lấy giá trị từ formData, không trim để giữ nguyên giá trị
+                        const fieldValue = formData[field] !== undefined && formData[field] !== null 
+                            ? String(formData[field]) 
+                            : '';
+
+                        switch (operator) {
+                            case 'eq':
+                            case '==':
+                            case '===':
+                                const compareValue = value !== undefined && value !== null 
+                                    ? String(value) 
+                                    : '';
+                                const result = fieldValue === compareValue;
+                                return result;
+                            case 'ne':
+                            case '!=':
+                            case '!==':
+                                return fieldValue !== (value?.toString() || '');
+                            case 'gt':
+                            case '>':
+                                return parseFloat(fieldValue) > parseFloat(value);
+                            case 'gte':
+                            case '>=':
+                                return parseFloat(fieldValue) >= parseFloat(value);
+                            case 'lt':
+                            case '<':
+                                return parseFloat(fieldValue) < parseFloat(value);
+                            case 'lte':
+                            case '<=':
+                                return parseFloat(fieldValue) <= parseFloat(value);
+                            case 'contains':
+                                return fieldValue.includes(value?.toString() || '');
+                            case 'in':
+                                const values = Array.isArray(value) ? value : Array(value);
+                                return values.includes(fieldValue);
+                            case 'notEmpty':
+                            case 'hasValue':
+                                return fieldValue !== '';
+                            case 'empty':
+                            case 'noValue':
+                                return fieldValue === '';
+                            case 'and':
+                                const andOperands = expr.operands || expr.and || expr.Operands || expr.And || Array();
+                                return andOperands.every(op => evaluateExpression(op, formData));
+                            case 'or':
+                                const orOperands = expr.operands || expr.or || expr.Operands || expr.Or || Array();
+                                return orOperands.some(op => evaluateExpression(op, formData));
+                            default:
+                                console.warn('Unknown operator:', operator);
+                                return false;
+                        }
+                    }
+
+                    function applyConditions() {
+                        const formData = {};
+                        fields.forEach(f => {
+                            const input = document.getElementById(f.FieldCode);
+                            if (input) {
+                                // Lấy giá trị từ input/select/textarea
+                                let value = '';
+                                if (input.tagName === 'SELECT') {
+                                    // Lấy value từ selected option - đảm bảo lấy đúng
+                                    const selectedIndex = input.selectedIndex;
+                                    if (selectedIndex >= 0 && selectedIndex < input.options.length) {
+                                        const selectedOption = input.options[selectedIndex];
+                                        // Lấy value trực tiếp từ option
+                                        value = selectedOption ? selectedOption.value : '';
+                                    }
+                                    // Fallback: dùng input.value nếu không lấy được từ option
+                                    if (!value) {
+                                        value = input.value || '';
+                                    }
+                                } else if (input.tagName === 'TEXTAREA') {
+                                    value = input.value || '';
+                                } else {
+                                    value = input.value || '';
+                                }
+                                formData[f.FieldCode] = value;
+                            }
+                        });
+
+                        fields.forEach(field => {
+                            // Nếu field không có conditions, mặc định hiển thị
+                            if (!field.Conditions || field.Conditions.length === 0) {
+                                const fieldElement = document.getElementById(field.FieldCode);
+                                if (fieldElement) {
+                                    const container = document.querySelector(`[data-field-code="${field.FieldCode}"]`) || 
+                                                     fieldElement.parentElement;
+                                    if (container) {
+                                        container.style.display = '';
+                                        container.style.visibility = 'visible';
+                                    }
+                                }
+                                return;
+                            }
+
+                            const fieldElement = document.getElementById(field.FieldCode);
+                            // Tìm container bằng data-field-code attribute
+                            let container = document.querySelector(`[data-field-code="${field.FieldCode}"]`);
+                            // Fallback: tìm bằng closest hoặc parentElement
+                            if (!container && fieldElement) {
+                                container = fieldElement.closest('[data-field-code]') || 
+                                           fieldElement.closest('.col-md-6, .col-md-12, .col-md-4, .col-md-3, .col-md-8, .col-md-9, .col-md-2, .col-md-1, .col-md-5, .col-md-7, .col-md-9, .col-md-10, .col-md-11') || 
+                                           fieldElement.parentElement;
+                            }
+
+                            if (!fieldElement) {
+                                console.warn(`Cannot find element for field: ${field.FieldCode}`);
+                                return;
+                            }
+                        
+                            if (!container) {
+                                // Fallback: dùng parentElement trực tiếp
+                                container = fieldElement.parentElement;
+                                if (container) {
+                                    container.setAttribute('data-field-code', field.FieldCode);
+                                }
+                            }
+                        
+                            if (!container) {
+                                return;
+                            }
+
+                            // Sort conditions by priority
+                            const conditions = field.Conditions.sort((a, b) => a.Priority - b.Priority);
+
+                            let shouldShow = true;
+                            let shouldEnable = true;
+
+                            for (const condition of conditions) {
+                                const result = evaluateCondition(condition, formData);
+
+                                switch (condition.ConditionType) {
+                                    case 1: // Show
+                                        shouldShow = shouldShow && result;
+                                        break;
+                                    case 2: // Hide
+                                        shouldShow = shouldShow && !result;
+                                        break;
+                                    case 3: // Enable
+                                        shouldEnable = shouldEnable && result;
+                                        break;
+                                    case 4: // Disable
+                                        shouldEnable = shouldEnable && !result;
+                                        break;
+                                }
+                            }
+
+                            // Apply visibility
+                            if (shouldShow) {
+                                container.style.display = '';
+                                container.style.visibility = 'visible';
+                            } else {
+                                container.style.display = 'none';
+                                container.style.visibility = 'hidden';
+                                if (fieldElement) {
+                                    fieldElement.value = '';
+                                    fieldElement.removeAttribute('required');
+                                }
+                            }
+
+                            // Apply enable/disable
+                            if (fieldElement) {
+                                fieldElement.disabled = !shouldEnable;
+                            }
+                        });
+                    }
+
+                    // Setup validation and condition triggers on input change
+                    fields.forEach(field => {
+                        const input = document.getElementById(field.FieldCode);
+                        if (!input) return;
+
+                        // Trigger conditions on change (for select, input, etc.)
+                        if (input.tagName === 'SELECT') {
+                            input.addEventListener('change', function() {
+                                // Đảm bảo value đã được set trước khi apply conditions
+                                setTimeout(() => {
+                                    applyConditions();
+                                }, 50);
+                            });
+                        } else {
+                            input.addEventListener('change', function() {
+                                setTimeout(() => applyConditions(), 50);
+                            });
+                        }
+
+                        input.addEventListener('blur', function() {
+                            const value = this.value || '';
+                            const error = validateField(field.FieldCode, value);
+                            const errorDiv = document.getElementById('error-' + field.FieldCode);
+                            const container = this.closest('.col-md-6, .col-md-12, .col-md-4, .col-md-3, .col-md-8, .col-md-9') || this.parentElement;
+
+                            if (error) {
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                                if (errorDiv) {
+                                    errorDiv.textContent = error;
+                                    errorDiv.style.display = 'block';
+                                }
+                            } else {
+                                this.classList.remove('is-invalid');
+                                if (value) {
+                                    this.classList.add('is-valid');
+                                }
+                                if (errorDiv) {
+                                    errorDiv.textContent = '';
+                                    errorDiv.style.display = 'none';
+                                }
+                            }
+                        });
+
+                        input.addEventListener('input', function() {
+                            // Clear validation on input
+                            this.classList.remove('is-invalid', 'is-valid');
+                            const errorDiv = document.getElementById('error-' + field.FieldCode);
+                            if (errorDiv) {
+                                errorDiv.textContent = '';
+                                errorDiv.style.display = 'none';
+                            }
+                            // Re-evaluate conditions (chỉ cho input/textarea, không cho select vì select dùng 'change')
+                            if (this.tagName !== 'SELECT') {
+                                setTimeout(() => applyConditions(), 10);
+                            }
+                        });
+                    });
+
+                    // Apply conditions on page load (sau khi DOM ready)
+                    setTimeout(() => {
+                        applyConditions();
+                    }, 200);
+
+                    // Form submit validation
+                    form.addEventListener("submit", function (e) {
+                        let isValid = true;
+                        const errors = {};
+
+                        fields.forEach(field => {
+                            const input = document.getElementById(field.FieldCode);
+                            if (!input) return;
+
+                            // Skip validation if field is hidden
+                            const container = input.closest('.col-md-6, .col-md-12, .col-md-4, .col-md-3, .col-md-8, .col-md-9') || input.parentElement;
+                            if (container && container.style.display === 'none') {
+                                return;
+                            }
+
+                            const value = input.value || '';
+                            const error = validateField(field.FieldCode, value);
+
+                            if (error) {
+                                isValid = false;
+                                errors[field.FieldCode] = error;
+                                input.classList.add('is-invalid');
+                                const errorDiv = document.getElementById('error-' + field.FieldCode);
+                                if (errorDiv) {
+                                    errorDiv.textContent = error;
+                                    errorDiv.style.display = 'block';
+                                }
+                            } else {
+                                input.classList.remove('is-invalid');
+                                if (value) {
+                                    input.classList.add('is-valid');
+                                }
+                            }
+                        });
+
+                        if (!isValid) {
+                            e.preventDefault();
+                            const firstError = Object.values(errors)[0];
+                            alert('Vui lòng kiểm tra lại các trường đã đánh dấu. Lỗi đầu tiên: ' + firstError);
+                            return false;
+                        }
+
+                        try {
+                            const fd = new FormData(form);
+                            const payload = { code: fd.get("Code"), formVersionId: fd.get("FormVersionId"), data: {} };
+                            for (const entry of fd.entries()) {
+                                const k = entry[0];
+                                const v = entry[1];
+                                const formDataPrefix = "FormData[";
+                                if (k.startsWith(formDataPrefix) && k.endsWith("]")) {
+                                    const fieldCode = k.substring(formDataPrefix.length, k.length - 1);
+                                    payload.data[fieldCode] = v;
+                                }
+                            }
+                            console.log("Submitting form payload:", payload);
+                        } catch (e) {
+                            console.error("Failed to log submit payload", e);
+                        }
+                    });
+                })();
+            </script>
     }
     else
     {
-        <div class="alert alert-warning">
-            Không tìm thấy form. <a href="/Forms">Quay lại danh sách</a>
-        </div>
+            <div class="alert alert-warning">
+                Không tìm thấy form. <a href="/Forms">Quay lại danh sách</a>
+            </div>
     }
 </div>

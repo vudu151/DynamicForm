@@ -7,7 +7,7 @@ Table Forms {
   Code nvarchar(50) [unique, not null]
   Name nvarchar(200) [not null]
   Status int [default: 0]
-  CurrentVersionId int [ref: > FormVersions.Id]
+  CurrentVersionId int [ref: - FormVersions.Id, unique, note: 'Optional - Current active version']
   
   Note: 'Forms: Main form table\nStatus: 0=Draft, 1=Active, 2=Inactive'
 }
