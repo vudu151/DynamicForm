@@ -4,112 +4,153 @@
     ViewData["Title"] = "Danh sách Form";
 }
 
-<div class="container mt-4">
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Danh sách Form</h2>
-        <button class="btn btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#createFormBox" aria-expanded="false" aria-controls="createFormBox">
-            Tạo Form mới
-        </button>
-    </div>
-
-    <div class="collapse mb-4" id="createFormBox">
+<div class="row">
+    <div class="col-md-12">
         <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-success btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createFormModal">
+                        <i class="fas fa-plus"></i> Tạo Form mới
+                    </button>
+                </div>
+            </div>
             <div class="card-body">
-                <form method="post" asp-page-handler="CreateForm">
-                    @Html.AntiForgeryToken()
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <label class="form-label">Code</label>
-                            <input class="form-control" name="NewFormCode" placeholder="VD: PHIEU_KHAM" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Name</label>
-                            <input class="form-control" name="NewFormName" placeholder="VD: Phiếu Khám Bệnh" required />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Version</label>
-                            <input class="form-control" name="NewVersion" placeholder="VD: 1.0.0" required />
-                        </div>
-                        <div class="col-md-2 d-grid">
-                            <label class="form-label">&nbsp;</label>
-                            <button class="btn btn-primary" type="submit">Tạo</button>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Description</label>
-                            <input class="form-control" name="NewFormDescription" placeholder="Mô tả form (tuỳ chọn)" />
-                        </div>
-                        <div class="col-12">
-                            <div class="form-text">
-                                Nếu <strong>Code</strong> đã tồn tại thì hệ thống sẽ <strong>tự tạo Version mới</strong> cho form đó (không tạo form mới).
-                            </div>
-                        </div>
+
+                @if (Model.Forms.Any())
+                {
+                    <div class="table-responsive">
+                        <table id="forms-datatables" class="display table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Mã Form</th>
+                                    <th>Tên Form</th>
+                                    <th>Mô tả</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var form in Model.Forms)
+                                {
+                                    <tr>
+                                        <td>@form.Code</td>
+                                        <td>@form.Name</td>
+                                        <td>@(form.Description ?? "-")</td>
+                                        <td>
+                                            @if (form.Status == 1)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a href="/Forms/Fill?code=@form.Code" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i> Điền Form
+                                            </a>
+                                            <a href="/Forms/Designer?code=@form.Code" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-cog"></i> Thiết kế
+                                            </a>
+                                            @if (form.Status == 1)
+                                            {
+                                                <form method="post" asp-page-handler="Deactivate" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="formId" value="@form.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-ban"></i> Ngưng kích hoạt
+                                                    </button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                </form>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        Chưa có form nào. Vui lòng tạo form mới từ API.
+                    </div>
+                }
             </div>
         </div>
     </div>
-
-    @if (Model.Forms.Any())
-    {
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Mã Form</th>
-                        <th>Tên Form</th>
-                        <th>Mô tả</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var form in Model.Forms)
-                    {
-                        <tr>
-                            <td>@form.Code</td>
-                            <td>@form.Name</td>
-                            <td>@(form.Description ?? "-")</td>
-                            <td>
-                                @if (form.Status == 1)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Inactive</span>
-                                }
-                            </td>
-                            <td>
-                                <a href="/Forms/Fill?code=@form.Code" class="btn btn-sm btn-primary">Điền Form</a>
-                                <a href="/Forms/Designer?code=@form.Code" class="btn btn-sm btn-outline-secondary ms-1">Thiết kế</a>
-                                @if (form.Status == 1)
-                                {
-                                    <form method="post" asp-page-handler="Deactivate" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="formId" value="@form.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1">Ngưng kích hoạt</button>
-                                    </form>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-info">
-            Chưa có form nào. Vui lòng tạo form mới từ API.
-        </div>
-    }
 </div>
+
+<!-- Modal Tạo Form mới -->
+<div class="modal fade" id="createFormModal" tabindex="-1" aria-labelledby="createFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createFormModalLabel">Tạo Form mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="CreateForm" id="createFormForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Code <span class="text-danger">*</span></label>
+                            <input class="form-control" name="NewFormCode" id="newFormCode" placeholder="VD: PHIEU_KHAM" required />
+                            <div class="form-text">Mã định danh duy nhất của form</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input class="form-control" name="NewFormName" id="newFormName" placeholder="VD: Phiếu Khám Bệnh" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Version <span class="text-danger">*</span></label>
+                            <input class="form-control" name="NewVersion" id="newVersion" placeholder="VD: 1.0.0" required />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Description</label>
+                            <input class="form-control" name="NewFormDescription" id="newFormDescription" placeholder="Mô tả form (tuỳ chọn)" />
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle"></i> <strong>Lưu ý:</strong> Nếu <strong>Code</strong> đã tồn tại thì hệ thống sẽ <strong>tự tạo Version mới</strong> cho form đó (không tạo form mới).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Tạo Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            @if (Model.Forms.Any())
+            {
+                <text>
+                $("#forms-datatables").DataTable({
+                    "pageLength": 10,
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/vi.json"
+                    },
+                    "order": [[0, "asc"]],
+                    "columnDefs": [
+                        { "orderable": false, "targets": 4 } // Disable sorting on Actions column
+                    ]
+                });
+                </text>
+            }
+
+            // Reset form khi đóng modal
+            $('#createFormModal').on('hidden.bs.modal', function () {
+                $('#createFormForm')[0].reset();
+            });
+        });
+    </script>
+}

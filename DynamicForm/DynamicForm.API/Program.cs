@@ -25,23 +25,32 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        // Allow any origin for development (including mixed content HTTPS -> HTTP)
+        policy.SetIsOriginAllowed(origin => true)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// CORS phải được gọi trước UseAuthorization và MapControllers
+app.UseCors("AllowAll");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "DynamicForm API V1");
+        c.RoutePrefix = "swagger";
+    });
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+// Disable HTTPS redirection for development (API runs on HTTP)
+// app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 

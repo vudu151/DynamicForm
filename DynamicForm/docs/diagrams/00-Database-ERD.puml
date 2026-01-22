@@ -1,0 +1,213 @@
+@startuml
+!theme plain
+title Database ERD - DynamicForm System
+
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+' ============================================
+' BẢNG FORMS
+' ============================================
+entity "Forms" as Forms {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * Code : NVARCHAR(50) <<UNIQUE>>
+  * Name : NVARCHAR(200)
+  * Description : NVARCHAR(500) <<nullable>>
+  * Status : INT <<default:0>>
+  * CurrentVersionId : INT <<FK,nullable>>
+  * CreatedDate : DATETIME2
+  * CreatedBy : NVARCHAR(100)
+  * ModifiedDate : DATETIME2 <<nullable>>
+  * ModifiedBy : NVARCHAR(100) <<nullable>>
+  --
+  Status: 0=Draft, 1=Active, 2=Inactive
+}
+
+' ============================================
+' BẢNG FORMVERSIONS
+' ============================================
+entity "FormVersions" as FormVersions {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * FormId : INT <<FK>>
+  * Version : NVARCHAR(20)
+  * Status : INT <<default:0>>
+  * IsActive : BIT <<default:0,deprecated>>
+  * CreatedDate : DATETIME2
+  * CreatedBy : NVARCHAR(100)
+  * PublishedDate : DATETIME2 <<nullable>>
+  * PublishedBy : NVARCHAR(100) <<nullable>>
+  * ChangeLog : NVARCHAR(1000) <<nullable>>
+  --
+  Status: 0=Draft, 1=Published, 2=Archived
+}
+
+' ============================================
+' BẢNG FORMFIELDS
+' ============================================
+entity "FormFields" as FormFields {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * FormVersionId : INT <<FK>>
+  * FieldCode : NVARCHAR(50)
+  * FieldType : INT
+  * Label : NVARCHAR(200)
+  * DisplayOrder : INT
+  * IsRequired : BIT <<default:0>>
+  * IsVisible : BIT <<default:1>>
+  * DefaultValue : NVARCHAR(500) <<nullable>>
+  * Placeholder : NVARCHAR(200) <<nullable>>
+  * HelpText : NVARCHAR(500) <<nullable>>
+  * CssClass : NVARCHAR(200) <<nullable>>
+  * PropertiesJson : NVARCHAR(MAX) <<nullable>>
+  * ParentFieldId : INT <<FK,nullable>>
+  * MinOccurs : INT <<nullable>>
+  * MaxOccurs : INT <<nullable>>
+  * SectionCode : NVARCHAR(50) <<nullable>>
+  --
+  FieldType: 1=Text, 2=Number, 3=Date, 6=Select, 10=TextArea
+}
+
+' ============================================
+' BẢNG FIELDVALIDATIONS
+' ============================================
+entity "FieldValidations" as FieldValidations {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * FieldId : INT <<FK>>
+  * RuleType : INT
+  * RuleValue : NVARCHAR(500) <<nullable>>
+  * ErrorMessage : NVARCHAR(500)
+  * Priority : INT <<default:0>>
+  * IsActive : BIT <<default:1>>
+  --
+  RuleType: 1=Required, 2=Min, 3=Max, 4=Range, 5=Regex
+}
+
+' ============================================
+' BẢNG FIELDCONDITIONS
+' ============================================
+entity "FieldConditions" as FieldConditions {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * FieldId : INT <<FK>>
+  * ConditionType : INT
+  * Expression : NVARCHAR(1000)
+  * ActionsJson : NVARCHAR(MAX) <<nullable>>
+  * Priority : INT <<default:0>>
+  --
+  ConditionType: 1=Show, 2=Hide, 3=Enable, 4=Disable
+}
+
+' ============================================
+' BẢNG FIELDOPTIONS
+' ============================================
+entity "FieldOptions" as FieldOptions {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * FieldId : INT <<FK>>
+  * Value : NVARCHAR(100)
+  * Label : NVARCHAR(200)
+  * DisplayOrder : INT
+  * IsDefault : BIT <<default:0>>
+}
+
+' ============================================
+' BẢNG FORMDATAVALUES
+' ============================================
+entity "FormDataValues" as FormDataValues {
+  * **Id** : INT <<PK>>
+  --
+  * PublicId : UNIQUEIDENTIFIER <<UNIQUE>>
+  * SubmissionId : INT <<no FK>>
+  * FormVersionId : INT <<FK>>
+  * FormFieldId : INT <<FK>>
+  * ObjectId : NVARCHAR(100)
+  * ObjectType : NVARCHAR(50)
+  * FieldValue : NVARCHAR(4000) <<nullable>>
+  * DisplayOrder : INT <<default:0>>
+  * SectionCode : NVARCHAR(50) <<nullable>>
+  * Status : INT <<default:0>>
+  * CreatedDate : DATETIME2
+  * CreatedBy : NVARCHAR(100)
+  * ModifiedDate : DATETIME2 <<nullable>>
+  * ModifiedBy : NVARCHAR(100) <<nullable>>
+  --
+  Status: 0=Draft, 1=Submitted, 2=Approved
+  SubmissionId: Tự quản lý, không có FK
+}
+
+' ============================================
+' QUAN HỆ GIỮA CÁC BẢNG
+' ============================================
+
+' Forms → FormVersions (One-to-Many)
+Forms ||--o{ FormVersions : "FormId (Restrict)"
+
+' Forms → FormVersions (One-to-One, Optional)
+Forms }o--|| FormVersions : "CurrentVersionId (SetNull)"
+
+' FormVersions → FormFields (One-to-Many)
+FormVersions ||--o{ FormFields : "FormVersionId (Cascade)"
+
+' FormVersions → FormDataValues (One-to-Many)
+FormVersions ||--o{ FormDataValues : "FormVersionId (Restrict)"
+
+' FormFields → FieldValidations (One-to-Many)
+FormFields ||--o{ FieldValidations : "FieldId (Cascade)"
+
+' FormFields → FieldConditions (One-to-Many)
+FormFields ||--o{ FieldConditions : "FieldId (Cascade)"
+
+' FormFields → FieldOptions (One-to-Many)
+FormFields ||--o{ FieldOptions : "FieldId (Cascade)"
+
+' FormFields → FormDataValues (One-to-Many)
+FormFields ||--o{ FormDataValues : "FormFieldId (Restrict)"
+
+' FormFields → FormFields (Self-referencing, Optional)
+FormFields }o--o{ FormFields : "ParentFieldId (NoAction)"
+
+' ============================================
+' GHI CHÚ
+' ============================================
+note right of Forms
+  **Forms**: Bảng chính chứa thông tin form
+  - Code: Unique identifier (VD: PHIEU_KHAM_BENH)
+  - CurrentVersionId: Optional, version đang active
+end note
+
+note right of FormVersions
+  **FormVersions**: Quản lý version của form
+  - Version: Unique trong một form
+  - Status: 0=Draft, 1=Published, 2=Archived
+end note
+
+note right of FormFields
+  **FormFields**: Định nghĩa các field trong form
+  - FieldCode: Unique trong một version
+  - ParentFieldId: Optional, cho nested/repeat sections
+end note
+
+note right of FormDataValues
+  **FormDataValues**: Dữ liệu đã submit
+  - SubmissionId: Tự quản lý, KHÔNG có FK
+  - ObjectId/ObjectType: Liên kết với đối tượng nghiệp vụ
+  - Cùng SubmissionId = cùng 1 lần submit
+end note
+
+note bottom of FormDataValues
+  **Lưu ý quan trọng:**
+  - SubmissionId không có Foreign Key constraint
+  - Dùng để nhóm các FormDataValue của cùng 1 submission
+  - Tự động tăng khi tạo submission mới
+end note
+
+@enduml

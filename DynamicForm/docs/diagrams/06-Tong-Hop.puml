@@ -1,0 +1,33 @@
+@startuml
+title Quy trình Tổng hợp - Luồng sử dụng hệ thống
+
+start
+
+partition "Admin" {
+  :Tạo Form mới;
+  :Thiết kế metadata;
+  :Kích hoạt version;
+}
+
+partition "User (Doctor/Nurse)" {
+  :Mở form để điền;
+  :Điền dữ liệu;
+  :Lưu dữ liệu;
+}
+
+partition "User xem/sửa" {
+  :Chọn submission;
+  :Xem dữ liệu;
+  :Sửa dữ liệu (nếu cần);
+  :Lưu cập nhật;
+}
+
+partition "Admin cập nhật" {
+  :Tạo version mới;
+  :Cập nhật metadata;
+  :Kích hoạt version mới;
+}
+
+stop
+
+@enduml

@@ -19,14 +19,40 @@ html {
 
 body {
   margin-bottom: 60px;
+  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .df-field-item {
   cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding-right: 60px; /* Tạo không gian cho badge bên phải */
+  overflow: visible; /* Cho phép hiển thị đầy đủ */
+}
+
+.df-field-item:hover {
+  background-color: #f8f9fa;
+  border-color: #cbd5e0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 .df-field-item.active {
-  border-color: rgba(13, 110, 253, 0.65);
+  border-color: #4f46e5;
+  border-width: 2px;
+  background-color: #eef2ff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.df-field-item.active:hover {
+  background-color: #e0e7ff;
+  border-color: #4f46e5;
 }
 
 .df-field-hidden {
@@ -39,21 +65,20 @@ body {
   font-weight: 700;
   line-height: 1;
   font-size: 1.2em;
-  padding: 0 4px;
+  padding: 4px 8px;
+  color: #6b7280;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.df-drag-handle:hover {
+  background-color: #f3f4f6;
+  color: #4f46e5;
 }
 
 .df-drag-handle:active {
   cursor: grabbing;
-}
-
-.df-field-item {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.df-field-item:hover {
-  background-color: rgba(13, 110, 253, 0.05);
+  background-color: #e5e7eb;
 }
 
 .df-field-item.df-dragging {
@@ -98,9 +123,102 @@ body {
   margin: 4px 0;
 }
 
+.df-preview-control {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Quan trọng cho flex item */
+  display: block;
+}
+
+.df-field-item .flex-grow-1,
+.df-field-item .df-field-content {
+  min-width: 0; /* Quan trọng: cho phép flex item shrink */
+  max-width: 100%;
+  width: 100%;
+  flex: 1 1 0%; /* Cho phép flex item grow và shrink */
+  padding-right: 0 !important; /* Không có padding bên phải */
+  margin-right: 0 !important; /* Không có margin bên phải */
+}
+
+.df-preview-control {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  min-width: 0;
+  display: block;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  position: relative;
+}
+
+/* Đảm bảo input/select full width trong preview control */
+.df-preview-control > .form-control,
+.df-preview-control > .form-select,
+.df-preview-control > .form-control-sm,
+.df-preview-control > .form-select-sm,
+.df-preview-control > textarea,
+.df-preview-control > input[type="text"],
+.df-preview-control > input[type="number"],
+.df-preview-control > input[type="date"],
+.df-preview-control > input,
+.df-preview-control > select,
 .df-preview-control .form-control,
-.df-preview-control .form-select {
+.df-preview-control .form-select,
+.df-preview-control .form-control-sm,
+.df-preview-control .form-select-sm,
+.df-preview-control textarea {
   pointer-events: none;
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  width: 100% !important; /* Full width cho input và select */
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important; /* Đảm bảo padding không làm tràn */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  display: block !important; /* Đảm bảo display block để full width */
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  position: relative;
+}
+
+.df-field-item .fw-semibold {
+  color: #1f2937;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.df-field-item .small {
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.df-field-item .badge,
+.df-field-item .df-field-badge {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.df-field-item.active .badge,
+.df-field-item.active .df-field-badge {
+  background-color: #4f46e5;
+  color: #ffffff;
+}
+
+.df-field-item .text-danger {
+  color: #ef4444 !important;
 }
 
 /* Scroll cho preview area khi có hơn 4 trường */
@@ -141,4 +259,81 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/* Loại bỏ hiệu ứng hover quá mạnh cho alert trong modal */
+.modal .alert {
+  transition: none;
+  border: 1px solid #bee5eb;
+  background-color: #d1ecf1;
+}
+
+.modal .alert:hover {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  transform: none;
+  box-shadow: none;
+}
+
+.modal .alert.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+/* Sửa shadow của modal để nhất quán */
+.modal-content {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+  transition: none !important;
+}
+
+.modal-content:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Toolbox: Xóa khoảng cách giữa search box và list group */
+#toolbox {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.card-body.border-bottom + #toolbox {
+  margin-top: 0 !important;
+}
+
+/* Xóa khoảng cách cho item đầu tiên trong toolbox */
+#toolbox .list-group-item:first-child {
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 0.75rem !important;
+}
+
+/* Đảm bảo không có khoảng cách khi click hoặc focus */
+#toolbox .list-group-item {
+  border-left: none !important;
+  border-right: none !important;
+  border-radius: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+#toolbox .list-group-item:first-child {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-top: none !important;
+}
+
+#toolbox .list-group-item:last-child {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+/* Đảm bảo card-body không tạo khoảng cách */
+.card-body.border-bottom {
+  margin-bottom: 0 !important;
+  padding-bottom: 0.5rem !important;
 }

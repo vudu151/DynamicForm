@@ -1,0 +1,76 @@
+// Database ERD - DynamicForm System (Simplified)
+// Format: DBML (Database Markup Language)
+// Có thể paste vào: https://dbdiagram.io/
+
+Table Forms {
+  Id int [pk, increment]
+  Code nvarchar(50) [unique, not null]
+  Name nvarchar(200) [not null]
+  Status int [default: 0]
+  CurrentVersionId int [ref: > FormVersions.Id]
+  
+  Note: 'Forms: Main form table\nStatus: 0=Draft, 1=Active, 2=Inactive'
+}
+
+Table FormVersions {
+  Id int [pk, increment]
+  FormId int [ref: > Forms.Id]
+  Version nvarchar(20) [not null]
+  Status int [default: 0]
+  ChangeLog nvarchar(1000)
+  
+  Note: 'FormVersions: Version management\nStatus: 0=Draft, 1=Published, 2=Archived'
+}
+
+Table FormFields {
+  Id int [pk, increment]
+  FormVersionId int [ref: > FormVersions.Id]
+  FieldCode nvarchar(50) [not null]
+  FieldType int [not null]
+  Label nvarchar(200) [not null]
+  IsRequired bit [default: 0]
+  ParentFieldId int [ref: > FormFields.Id]
+  
+  Note: 'FormFields: Field definitions\nFieldType: 1=Text, 2=Number, 3=Date, 6=Select, 10=TextArea'
+}
+
+Table FieldValidations {
+  Id int [pk, increment]
+  FieldId int [ref: > FormFields.Id]
+  RuleType int [not null]
+  RuleValue nvarchar(500)
+  ErrorMessage nvarchar(500) [not null]
+  
+  Note: 'FieldValidations: Validation rules\nRuleType: 1=Required, 2=Min, 3=Max, 4=Range, 5=Regex'
+}
+
+Table FieldConditions {
+  Id int [pk, increment]
+  FieldId int [ref: > FormFields.Id]
+  ConditionType int [not null]
+  Expression nvarchar(1000) [not null]
+  
+  Note: 'FieldConditions: Conditional logic\nConditionType: 1=Show, 2=Hide, 3=Enable, 4=Disable'
+}
+
+Table FieldOptions {
+  Id int [pk, increment]
+  FieldId int [ref: > FormFields.Id]
+  Value nvarchar(100) [not null]
+  Label nvarchar(200) [not null]
+  
+  Note: 'FieldOptions: Options for Select fields'
+}
+
+Table FormDataValues {
+  Id int [pk, increment]
+  SubmissionId int [not null]
+  FormVersionId int [ref: > FormVersions.Id]
+  FormFieldId int [ref: > FormFields.Id]
+  ObjectId nvarchar(100) [not null]
+  ObjectType nvarchar(50) [not null]
+  FieldValue nvarchar(4000)
+  Status int [default: 0]
+  
+  Note: 'FormDataValues: Submitted form data\nSubmissionId: NO FK - Self-managed\nStatus: 0=Draft, 1=Submitted, 2=Approved'
+}

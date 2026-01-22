@@ -116,9 +116,7 @@ public class FormDataService : IFormDataService
         // Tạo SubmissionId mới (INT) - Tự quản lý, không có bảng Submissions
         // Lấy SubmissionId lớn nhất hiện tại, +1 để tạo mới
         var maxSubmissionId = await _context.FormDataValues
-            .Select(v => (int?)v.SubmissionId)
-            .DefaultIfEmpty(0)
-            .MaxAsync();
+            .MaxAsync(v => (int?)v.SubmissionId);
         
         var newSubmissionId = (maxSubmissionId ?? 0) + 1;
         var createdDate = DateTime.UtcNow;
@@ -409,5 +407,117 @@ public class FormDataService : IFormDataService
         catch { }
 
         return null;
+    }
+
+    public async Task<List<FormDataListItemDto>> GetFormDataListAsync(Guid? formVersionPublicId = null, string? objectType = null, string? objectId = null)
+    {
+        var baseQuery = _context.FormDataValues.AsQueryable();
+
+        // Filter by FormVersion
+        int? formVersionId = null;
+        if (formVersionPublicId.HasValue)
+        {
+            formVersionId = await _context.FormVersions
+                .Where(v => v.PublicId == formVersionPublicId.Value)
+                .Select(v => (int?)v.Id)
+                .FirstOrDefaultAsync();
+            
+            if (formVersionId.HasValue)
+            {
+                baseQuery = baseQuery.Where(v => v.FormVersionId == formVersionId.Value);
+            }
+            else
+            {
+                return new List<FormDataListItemDto>();
+            }
+        }
+
+        // Filter by ObjectType
+        if (!string.IsNullOrEmpty(objectType))
+        {
+            baseQuery = baseQuery.Where(v => v.ObjectType == objectType);
+        }
+
+        // Filter by ObjectId
+        if (!string.IsNullOrEmpty(objectId))
+        {
+            baseQuery = baseQuery.Where(v => v.ObjectId == objectId);
+        }
+
+        // Get distinct SubmissionIds with their metadata
+        var submissionGroups = await baseQuery
+            .GroupBy(v => new
+            {
+                v.SubmissionId,
+                v.FormVersionId,
+                v.ObjectId,
+                v.ObjectType,
+                v.Status,
+                v.CreatedDate,
+                v.CreatedBy,
+                v.ModifiedDate,
+                v.ModifiedBy
+            })
+            .Select(g => new
+            {
+                SubmissionId = g.Key.SubmissionId,
+                FormVersionId = g.Key.FormVersionId,
+                ObjectId = g.Key.ObjectId,
+                ObjectType = g.Key.ObjectType,
+                Status = g.Key.Status,
+                CreatedDate = g.Key.CreatedDate,
+                CreatedBy = g.Key.CreatedBy,
+                ModifiedDate = g.Key.ModifiedDate,
+                ModifiedBy = g.Key.ModifiedBy,
+                FieldCount = g.Count()
+            })
+            .OrderByDescending(x => x.CreatedDate)
+            .ToListAsync();
+
+        if (submissionGroups.Count == 0)
+        {
+            return new List<FormDataListItemDto>();
+        }
+
+        // Get all unique FormVersionIds
+        var formVersionIds = submissionGroups.Select(s => s.FormVersionId).Distinct().ToList();
+        
+        // Load FormVersions with Forms
+        var formVersions = await _context.FormVersions
+            .Include(v => v.Form)
+            .Where(v => formVersionIds.Contains(v.Id))
+            .ToListAsync();
+
+        var formVersionDict = formVersions.ToDictionary(v => v.Id);
+
+        // Build result
+        var result = new List<FormDataListItemDto>();
+        
+        foreach (var sub in submissionGroups)
+        {
+            if (!formVersionDict.TryGetValue(sub.FormVersionId, out var formVersion))
+            {
+                continue; // Skip if FormVersion not found
+            }
+
+            result.Add(new FormDataListItemDto
+            {
+                SubmissionId = sub.SubmissionId,
+                FormVersionId = formVersion.PublicId,
+                FormVersionName = formVersion.Version,
+                FormName = formVersion.Form.Name,
+                FormCode = formVersion.Form.Code,
+                ObjectId = sub.ObjectId,
+                ObjectType = sub.ObjectType,
+                CreatedDate = sub.CreatedDate,
+                CreatedBy = sub.CreatedBy,
+                ModifiedDate = sub.ModifiedDate,
+                ModifiedBy = sub.ModifiedBy,
+                Status = sub.Status,
+                FieldCount = sub.FieldCount
+            });
+        }
+
+        return result;
     }
 }

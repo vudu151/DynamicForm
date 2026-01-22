@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantUML URL Generator - DynamicForm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .diagram-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .diagram-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+        
+        .diagram-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .diagram-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .diagram-card p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+        
+        .btn-secondary {
+            background: #28a745;
+        }
+        
+        .btn-secondary:hover {
+            background: #218838;
+        }
+        
+        .editor-section {
+            margin-top: 30px;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 30px;
+        }
+        
+        .editor-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-box strong {
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 PlantUML URL Generator</h1>
+            <p>DynamicForm - UML Activity Diagrams</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-box">
+                <strong>Hướng dẫn:</strong> Chọn một diagram từ danh sách bên dưới, sau đó click "Mở PlantUML Web" để xem sơ đồ trên trình duyệt. 
+                Hoặc copy code PlantUML và paste vào editor bên dưới để chỉnh sửa.
+            </div>
+            
+            <div class="diagram-list" id="diagramList">
+                <!-- Diagrams will be loaded here -->
+            </div>
+            
+            <div class="editor-section">
+                <h2>📝 PlantUML Editor</h2>
+                <p style="color: #666; margin-bottom: 15px;">Paste hoặc chỉnh sửa code PlantUML ở đây:</p>
+                <textarea id="plantumlCode" placeholder="@startuml
+title Your Diagram
+
+start
+:Your activity here;
+stop
+
+@enduml"></textarea>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="openPlantUML()">🚀 Mở PlantUML Web</button>
+                    <button class="btn" onclick="copyToClipboard()">📋 Copy Code</button>
+                    <button class="btn" onclick="clearEditor()">🗑️ Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Danh sách các diagram
+        const diagrams = [
+            {
+                id: '01',
+                title: 'Tạo và Thiết kế Form',
+                description: 'Quy trình Admin tạo form mới, thiết kế metadata và kích hoạt version',
+                file: '01-Tao-Thiet-Ke-Form.puml'
+            },
+            {
+                id: '02',
+                title: 'Điền và Lưu Dữ liệu',
+                description: 'Quy trình User điền form, validate và lưu dữ liệu vào database',
+                file: '02-Dien-Luu-Du-Lieu.puml'
+            },
+            {
+                id: '03',
+                title: 'Xem và Sửa Dữ liệu',
+                description: 'Quy trình xem và cập nhật dữ liệu form đã lưu',
+                file: '03-Xem-Sua-Du-Lieu.puml'
+            },
+            {
+                id: '04',
+                title: 'Tạo Version mới',
+                description: 'Quy trình tự động tạo version khi form đã tồn tại',
+                file: '04-Tao-Version-Moi.puml'
+            },
+            {
+                id: '05',
+                title: 'Validate Dữ liệu',
+                description: 'Quy trình chi tiết về validation engine',
+                file: '05-Validate-Du-Lieu.puml'
+            },
+            {
+                id: '06',
+                title: 'Tổng hợp - Luồng hệ thống',
+                description: 'Tổng quan luồng sử dụng hệ thống từ các actor',
+                file: '06-Tong-Hop.puml'
+            }
+        ];
+        
+        // Load diagrams vào danh sách
+        function loadDiagrams() {
+            const list = document.getElementById('diagramList');
+            diagrams.forEach(diagram => {
+                const card = document.createElement('div');
+                card.className = 'diagram-card';
+                card.innerHTML = `
+                    <h3>${diagram.id}. ${diagram.title}</h3>
+                    <p>${diagram.description}</p>
+                    <button class="btn" onclick="loadDiagram('${diagram.file}')">📄 Load vào Editor</button>
+                    <button class="btn btn-secondary" onclick="openDiagram('${diagram.file}')">🚀 Mở PlantUML Web</button>
+                `;
+                list.appendChild(card);
+            });
+        }
+        
+        // Load diagram vào editor
+        async function loadDiagram(filename) {
+            try {
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    // Nếu không load được file, thử load từ nội dung đã biết
+                    console.log('Cannot load file, using fallback');
+                    return;
+                }
+                const code = await response.text();
+                document.getElementById('plantumlCode').value = code;
+                document.getElementById('plantumlCode').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Không thể load file. Vui lòng mở file .puml trực tiếp từ thư mục diagrams/');
+            }
+        }
+        
+        // Mở diagram trên PlantUML web
+        async function openDiagram(filename) {
+            try {
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    alert('Không thể load file. Vui lòng copy code từ file .puml và paste vào editor.');
+                    return;
+                }
+                const code = await response.text();
+                openPlantUMLWithCode(code);
+            } catch (error) {
+                alert('Không thể load file. Vui lòng copy code từ file .puml và paste vào editor.');
+            }
+        }
+        
+        // Encode PlantUML code thành URL
+        function encodePlantUML(code) {
+            // PlantUML sử dụng encoding đặc biệt
+            // Sử dụng deflate compression và base64 encoding
+            // Đơn giản hóa: sử dụng encodeURIComponent
+            return encodeURIComponent(code);
+        }
+        
+        // Mở PlantUML web với code
+        function openPlantUMLWithCode(code) {
+            // PlantUML web server sử dụng format: http://www.plantuml.com/plantuml/uml/{encoded}
+            // Encoding: deflate + base64
+            // Tạm thời sử dụng cách đơn giản: copy code và mở trang web
+            const url = 'http://www.plantuml.com/plantuml/uml/';
+            window.open(url, '_blank');
+            
+            // Lưu code vào localStorage để user có thể paste
+            localStorage.setItem('plantuml_code', code);
+            alert('Đã mở PlantUML Web Server.\n\nVui lòng:\n1. Copy code từ editor bên dưới\n2. Paste vào ô text trên trang PlantUML\n3. Click "Submit" để xem sơ đồ');
+        }
+        
+        // Mở PlantUML web với code từ editor
+        function openPlantUML() {
+            const code = document.getElementById('plantumlCode').value;
+            if (!code.trim()) {
+                alert('Vui lòng nhập code PlantUML vào editor trước!');
+                return;
+            }
+            openPlantUMLWithCode(code);
+        }
+        
+        // Copy code vào clipboard
+        function copyToClipboard() {
+            const code = document.getElementById('plantumlCode').value;
+            if (!code.trim()) {
+                alert('Không có code để copy!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Đã copy code vào clipboard!\n\nBây giờ bạn có thể paste vào PlantUML Web Server.');
+            }).catch(err => {
+                // Fallback cho trình duyệt cũ
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Đã copy code vào clipboard!');
+            });
+        }
+        
+        // Xóa editor
+        function clearEditor() {
+            if (confirm('Bạn có chắc muốn xóa toàn bộ code trong editor?')) {
+                document.getElementById('plantumlCode').value = '';
+            }
+        }
+        
+        // Load diagrams khi trang load
+        window.onload = function() {
+            loadDiagrams();
+            
+            // Kiểm tra xem có code đã lưu không
+            const savedCode = localStorage.getItem('plantuml_code');
+            if (savedCode) {
+                document.getElementById('plantumlCode').value = savedCode;
+                localStorage.removeItem('plantuml_code');
+            }
+        };
+    </script>
+</body>
+</html>

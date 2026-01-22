@@ -1,0 +1,40 @@
+@startuml
+title Quy trình Tạo và Thiết kế Form
+
+start
+
+:Admin nhập thông tin form\n(Code, Name, Description, Version);
+
+:Kiểm tra Form code\nđã tồn tại?;
+
+if (Form code đã tồn tại?) then (Có)
+  :Lấy Form đã có;
+else (Không)
+  :Tạo Form mới;
+endif
+
+:Kiểm tra Version\nđã tồn tại?;
+
+if (Version đã tồn tại?) then (Có)
+  :Tự động tăng version\n(1→2, 1.0.0→1.0.1);
+else (Không)
+  :Sử dụng version đã nhập;
+endif
+
+:Tạo Version mới;
+
+:Chuyển đến màn Designer;
+
+:Admin thiết kế form\n(Thêm field, sắp xếp, validation);
+
+:Lưu metadata form\n(Fields, Validations, Options);
+
+:Admin kích hoạt version;
+
+:Kích hoạt version này\nvà tắt các version khác;
+
+:Form đã sẵn sàng sử dụng;
+
+stop
+
+@enduml

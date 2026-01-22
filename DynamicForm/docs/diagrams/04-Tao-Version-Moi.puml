@@ -1,0 +1,47 @@
+@startuml
+title Quy trình Tạo Version mới (Form đã tồn tại)
+
+start
+
+:Admin tạo form với code đã tồn tại;
+
+:Web UI gửi request\nPOST /api/forms;
+
+:API kiểm tra Form code đã tồn tại?;
+
+if (Form code đã tồn tại?) then (Không)
+  :Tạo form mới;
+  stop
+else (Có)
+  :Không tạo form mới;
+  
+  :Lấy FormId của form đã tồn tại;
+  
+  :Web UI gửi request\nPOST /api/forms/{formId}/versions;
+  
+  :API kiểm tra version đã tồn tại?;
+  
+  if (Version đã tồn tại?) then (Có)
+    partition "Auto-increment Version" {
+      if (Version là số đơn giản?) then (Có - VD: "1")
+        :Tìm MAX version số\n(1, 2, 3...);
+        :Tạo version mới = MAX + 1;
+      else (Không - VD: "1.0.0")
+        :Tìm version cùng pattern\n(1.0.x);
+        :Tăng phần cuối\n(1.0.0 → 1.0.1);
+      endif
+    }
+  else (Không)
+    :Sử dụng version đã nhập;
+  endif
+  
+  :INSERT FormVersions\n(version đã tăng);
+  
+  :Trả về FormVersion đã tạo;
+  
+  :Chuyển đến Designer với version mới;
+  
+  stop
+endif
+
+@enduml

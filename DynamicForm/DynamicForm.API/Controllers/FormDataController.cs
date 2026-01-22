@@ -80,6 +80,16 @@ public class FormDataController : ControllerBase
         var result = await _formDataService.ValidateFormDataAsync(request.FormVersionId, request.Data);
         return Ok(result);
     }
+
+    [HttpGet("list")]
+    public async Task<ActionResult<List<FormDataListItemDto>>> GetFormDataList(
+        [FromQuery] Guid? formVersionId = null,
+        [FromQuery] string? objectType = null,
+        [FromQuery] string? objectId = null)
+    {
+        var list = await _formDataService.GetFormDataListAsync(formVersionId, objectType, objectId);
+        return Ok(list);
+    }
 }
 
 public class ValidateFormDataRequest

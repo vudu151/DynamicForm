@@ -1,31 +1,55 @@
 ﻿@page
 @model IndexModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = "Trang chủ";
+    var apiBaseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5144";
+    var swaggerUrl = $"{apiBaseUrl.TrimEnd('/')}/swagger";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Hệ thống Dynamic Form</h1>
-    <p class="lead">Hệ thống quản lý form động cho HIS (Hospital Information System)</p>
-    <hr />
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Danh sách Form</h5>
-                    <p class="card-text">Xem và điền các form có sẵn trong hệ thống</p>
-                    <a href="/Forms" class="btn btn-primary">Xem danh sách</a>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body p-0 position-relative">
+                <div id="swaggerLoading" class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Đang tải Swagger UI...</p>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">API Documentation</h5>
-                    <p class="card-text">Xem tài liệu API tại Swagger UI</p>
-                    <a href="https://localhost:7000/swagger" target="_blank" class="btn btn-secondary">Mở Swagger</a>
-                </div>
+                <iframe src="@swaggerUrl" 
+                        style="width: 100%; height: calc(100vh - 250px); min-height: 600px; border: none; display: none;"
+                        frameborder="0"
+                        id="swaggerFrame"
+                        onload="document.getElementById('swaggerLoading').style.display='none'; this.style.display='block';">
+                </iframe>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Timeout sau 10 giây nếu iframe không load
+            setTimeout(function() {
+                if ($('#swaggerFrame').is(':hidden')) {
+                    $('#swaggerLoading').html(
+                        '<div class="alert alert-warning">' +
+                        '<h5><i class="fas fa-exclamation-triangle"></i> Không thể tải Swagger UI</h5>' +
+                        '<p>Vui lòng đảm bảo API đang chạy tại: <strong>@swaggerUrl</strong></p>' +
+                        '<p class="mb-2">Có thể do:</p>' +
+                        '<ul class="text-start">' +
+                        '<li>API chưa được khởi động</li>' +
+                        '<li>X-Frame-Options chặn iframe embedding</li>' +
+                        '<li>Lỗi kết nối</li>' +
+                        '</ul>' +
+                        '<a href="@swaggerUrl" target="_blank" class="btn btn-primary mt-2">' +
+                        '<i class="fas fa-external-link-alt"></i> Mở Swagger trong tab mới</a>' +
+                        '</div>'
+                    );
+                }
+            }, 10000);
+        });
+    </script>
+}

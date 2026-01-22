@@ -11,24 +11,6 @@
 }
 
 <div class="container-fluid mt-4">
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
-    @if (TempData["ErrorDetails"] != null)
-    {
-        <div class="alert alert-warning">
-            <div class="fw-semibold mb-1">Chi tiết lỗi (debug)</div>
-            <pre class="mb-0" style="white-space:pre-wrap;">@TempData["ErrorDetails"]</pre>
-        </div>
-        <script>
-            console.error("Designer error details:\n" + @Html.Raw(JsonSerializer.Serialize(TempData["ErrorDetails"]?.ToString())));
-        </script>
-    }
 
     <div class="d-flex align-items-center justify-content-between mb-3">
         <div>
@@ -66,7 +48,7 @@
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
                     <label class="form-label">Chọn Form</label>
-                    <select class="form-select" id="formSelect">
+                    <select class="form-select" id="formSelect" @(Model.Metadata != null ? "disabled" : "")>
                         <option value="">-- Chọn --</option>
                         @foreach (var f in Model.Forms.OrderBy(x => x.Name))
                         {
@@ -78,7 +60,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Chọn Version</label>
-                    <select class="form-select" id="versionSelect" @(Model.Versions.Any() ? "" : "disabled")>
+                    <select class="form-select" id="versionSelect" @(Model.Metadata != null || !Model.Versions.Any() ? "disabled" : "")>
                         <option value="">-- Chọn --</option>
                         @foreach (var v in Model.Versions.OrderByDescending(x => x.CreatedDate))
                         {
@@ -90,36 +72,6 @@
                 </div>
             </div>
 
-            <hr class="my-3" />
-
-            <details>
-                <summary class="mb-2"><strong>Tạo form mới</strong></summary>
-                <form method="post" asp-page-handler="CreateForm" class="mt-3">
-                    @Html.AntiForgeryToken()
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <label class="form-label">Code</label>
-                            <input class="form-control" name="NewFormCode" placeholder="VD: PHIEU_KHAM" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Name</label>
-                            <input class="form-control" name="NewFormName" placeholder="VD: Phiếu Khám Bệnh" required />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Version</label>
-                            <input class="form-control" name="NewVersion" placeholder="VD: 1.0.0" required />
-                        </div>
-                        <div class="col-md-2 d-grid">
-                            <label class="form-label">&nbsp;</label>
-                            <button class="btn btn-success" type="submit">Tạo</button>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Description</label>
-                            <input class="form-control" name="NewFormDescription" placeholder="Mô tả form (tuỳ chọn)" />
-                        </div>
-                    </div>
-                </form>
-            </details>
         </div>
     </div>
 
@@ -143,10 +95,10 @@
                         <div class="card-header">
                             <strong>Toolbox</strong>
                         </div>
-                        <div class="card-body border-bottom">
-                            <input class="form-control form-control-sm" id="toolboxSearch" placeholder="Tìm loại câu hỏi..." />
+                        <div class="card-body border-bottom pb-2 mb-0" style="padding-bottom: 0.5rem !important;">
+                            <input class="form-control form-control-sm" id="toolboxSearch" placeholder="Tìm type của form..." />
                         </div>
-                        <div class="list-group list-group-flush" id="toolbox">
+                        <div class="list-group list-group-flush" id="toolbox" style="margin-top: 0 !important; padding-top: 0 !important;">
                             <button class="list-group-item list-group-item-action" type="button" data-type="1">Text</button>
                             <button class="list-group-item list-group-item-action" type="button" data-type="2">Number</button>
                             <button class="list-group-item list-group-item-action" type="button" data-type="3">Date</button>
@@ -288,6 +240,7 @@
             const API_BASE_URL = @Html.Raw(JsonSerializer.Serialize(apiBaseUrl, jsOptions));
             // IMPORTANT: serialize to camelCase for JS (fieldCode/fieldType/label...)
             const initialFields = @Html.Raw(JsonSerializer.Serialize(fields, jsOptions));
+            const hasMetadata = @(Model.Metadata != null ? "true" : "false"); // Flag để biết đã có metadata hay chưa
         </script>
         <script>
             const state = {
@@ -426,7 +379,7 @@
 
                 state.fields.forEach((f, idx) => {
                     const item = document.createElement("div");
-                    item.className = "list-group-item df-field-item";
+                    item.className = "df-field-item";
                     item.setAttribute("draggable", "true");
                     item.dataset.idx = String(idx);
                     if (idx === state.selectedIndex) item.classList.add("active");
@@ -437,8 +390,8 @@
                     const preview = renderFieldPreviewHtml(f);
 
                     item.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start position-relative">
+                            <div class="flex-grow-1 df-field-content" style="width: 100%; max-width: 100%; min-width: 0;">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="df-drag-handle text-muted" title="Kéo để sắp xếp" draggable="false">☰</span>
                                     <div class="fw-semibold">${escapeHtml(f.label || "(no label)")}${required}</div>
@@ -446,7 +399,7 @@
                                 <div class="small opacity-75">${typeLabel(f.fieldType)} ${code}</div>
                                 <div class="mt-2 df-preview-control">${preview}</div>
                             </div>
-                            <span class="badge bg-light text-dark">${idx + 1}</span>
+                            <span class="badge bg-light text-dark df-field-badge" style="position: absolute; top: 0; right: 0;">${idx + 1}</span>
                         </div>
                     `;
 
@@ -868,10 +821,19 @@
                 // auto-load versions to enable version dropdown (instead of staying disabled).
 
                 async function fetchJson(url) {
-                    const res = await fetch(url, { headers: { "Accept": "application/json" } });
-                    const text = await res.text();
-                    if (!res.ok) throw new Error(`${res.status} ${res.statusText}\n${text}`);
-                    return text ? JSON.parse(text) : null;
+                    try {
+                        const res = await fetch(url, { 
+                            headers: { "Accept": "application/json" },
+                            mode: 'cors',
+                            credentials: 'omit'
+                        });
+                        const text = await res.text();
+                        if (!res.ok) throw new Error(`${res.status} ${res.statusText}\n${text}`);
+                        return text ? JSON.parse(text) : null;
+                    } catch (error) {
+                        console.error("Fetch error:", error);
+                        throw error;
+                    }
                 }
 
                 function navigateToDesigner(code, versionId) {
@@ -882,8 +844,11 @@
                     window.location.href = url;
                 }
 
-                async function loadVersionsForSelectedForm() {
-                    if (!formSelect || !versionSelect) return;
+                let isLoadingVersions = false; // Flag để tránh gọi nhiều lần
+
+                async function loadVersionsForSelectedForm(shouldNavigate = false) {
+                    if (!formSelect || !versionSelect || isLoadingVersions) return;
+                    
                     const code = formSelect.value;
                     const opt = formSelect.selectedOptions && formSelect.selectedOptions[0];
                     const formId = opt?.dataset?.formId;
@@ -894,6 +859,7 @@
                         return;
                     }
 
+                    isLoadingVersions = true;
                     versionSelect.disabled = true;
                     versionSelect.innerHTML = `<option value="">Đang tải version...</option>`;
 
@@ -915,33 +881,45 @@
                         if (active?.id) versionSelect.value = active.id;
                         else if (versions[0]?.id) versionSelect.value = versions[0].id;
 
-                        versionSelect.disabled = versions.length === 0;
+                        // Chỉ enable nếu chưa có metadata (chưa load form)
+                        // Nếu đã có metadata, giữ disabled để không cho thay đổi
+                        versionSelect.disabled = versions.length === 0 || hasMetadata;
 
-                        // Auto-load the selected form/version (removes need for "Tải Form" button)
-                        if (!versionSelect.disabled && versionSelect.value) {
+                        // Chỉ navigate nếu shouldNavigate = true (khi user thay đổi form)
+                        if (shouldNavigate && !versionSelect.disabled && versionSelect.value) {
                             navigateToDesigner(code, versionSelect.value);
-                        } else {
-                            navigateToDesigner(code, null);
                         }
                     } catch (e) {
                         console.error("Failed to load versions", e);
                         versionSelect.innerHTML = `<option value="">Lỗi tải version (xem Console)</option>`;
                         versionSelect.disabled = true;
+                    } finally {
+                        isLoadingVersions = false;
                     }
                 }
 
-                // If server didn't load versions (disabled), try client-side loading after selecting a form.
-                formSelect?.addEventListener("change", () => loadVersionsForSelectedForm());
+                // Chỉ load versions khi user thay đổi form select
+                formSelect?.addEventListener("change", () => {
+                    loadVersionsForSelectedForm(true); // true = should navigate
+                });
+                
                 versionSelect?.addEventListener("change", () => {
                     const code = formSelect?.value;
                     const vid = versionSelect?.value;
                     if (!code) return;
-                    // If user clears version selection, still load form by code (server picks latest/active)
+                    // User đã chọn version, navigate ngay
                     navigateToDesigner(code, vid || null);
                 });
-                if (versionSelect?.disabled) {
-                    // Handle cases where browser auto-fills a selection but server didn't load versions
-                    loadVersionsForSelectedForm();
+                
+                // Chỉ load versions khi form select disabled và chưa có metadata (lần đầu load)
+                @if (Model.Metadata == null)
+                {
+                    <text>
+                    if (versionSelect?.disabled && formSelect?.value) {
+                        // Chỉ load nếu chưa có metadata và có form được chọn
+                        loadVersionsForSelectedForm(false); // false = không navigate (để user chọn version)
+                    }
+                    </text>
                 }
 
                 // Prevent "Leave site?" popup when user explicitly submits a form (Save / Activate / Create...)

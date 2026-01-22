@@ -2,6 +2,7 @@ using DynamicForm.API.Data;
 using DynamicForm.API.DTOs;
 using DynamicForm.API.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace DynamicForm.API.Services;
 
@@ -446,10 +447,13 @@ public class FormService : IFormService
             throw new InvalidOperationException("Version is required");
         }
 
+        // Kiểm tra version đã tồn tại chưa
         var exists = await _context.FormVersions.AnyAsync(v => v.FormId == form.Id && v.Version == versionText);
+        
+        // Nếu version đã tồn tại, tự động tăng version lên
         if (exists)
         {
-            throw new InvalidOperationException($"Version already exists: {versionText}");
+            versionText = await GetNextVersionAsync(form.Id, versionText);
         }
 
         var version = new FormVersion
@@ -459,15 +463,72 @@ public class FormService : IFormService
             IsActive = false,
             CreatedBy = versionDto.CreatedBy,
             CreatedDate = DateTime.UtcNow,
-            ChangeLog = versionDto.ChangeLog
+            ChangeLog = versionDto.ChangeLog ?? $"Create version {versionText}"
         };
 
         _context.FormVersions.Add(version);
         await _context.SaveChangesAsync();
 
         versionDto.Id = version.PublicId; // Return PublicId
+        versionDto.Version = version.Version; // Return version thực tế (có thể đã được tăng)
         versionDto.CreatedDate = version.CreatedDate;
         return versionDto;
+    }
+
+    private async Task<string> GetNextVersionAsync(int formId, string baseVersion)
+    {
+        // Lấy tất cả versions của form này
+        var existingVersions = await _context.FormVersions
+            .Where(v => v.FormId == formId)
+            .Select(v => v.Version)
+            .ToListAsync();
+
+        // Nếu baseVersion là số đơn giản (1, 2, 3...)
+        if (int.TryParse(baseVersion, out int baseNumber))
+        {
+            // Tìm số lớn nhất
+            var maxNumber = existingVersions
+                .Where(v => int.TryParse(v, out _))
+                .Select(v => int.Parse(v))
+                .DefaultIfEmpty(0)
+                .Max();
+            
+            // Trả về số tiếp theo
+            return Math.Max(maxNumber + 1, baseNumber + 1).ToString();
+        }
+
+        // Nếu baseVersion là semantic version (1.0.0, 1.0.1...)
+        var parts = baseVersion.Split('.');
+        if (parts.Length >= 2 && int.TryParse(parts[parts.Length - 1], out int lastPart))
+        {
+            // Tìm version có cùng prefix (1.0.x)
+            var prefix = string.Join(".", parts.Take(parts.Length - 1));
+            var maxLastPart = existingVersions
+                .Where(v => v.StartsWith(prefix + "."))
+                .Select(v =>
+                {
+                    var vParts = v.Split('.');
+                    if (vParts.Length == parts.Length && int.TryParse(vParts[vParts.Length - 1], out int p))
+                        return p;
+                    return -1;
+                })
+                .Where(p => p >= 0)
+                .DefaultIfEmpty(-1)
+                .Max();
+
+            return $"{prefix}.{Math.Max(maxLastPart + 1, lastPart + 1)}";
+        }
+
+        // Fallback: thêm số vào cuối
+        var counter = 1;
+        string newVersion;
+        do
+        {
+            newVersion = $"{baseVersion}.{counter}";
+            counter++;
+        } while (existingVersions.Contains(newVersion) && counter < 1000);
+
+        return newVersion;
     }
 
     public async Task<bool> ActivateVersionAsync(Guid versionPublicId)

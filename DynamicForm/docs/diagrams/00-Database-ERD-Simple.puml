@@ -1,0 +1,87 @@
+@startuml
+!theme plain
+title Database ERD - DynamicForm System (Simplified)
+
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+' ============================================
+' BẢNG CHÍNH
+' ============================================
+entity "Forms" as Forms {
+  * **Id** : INT <<PK>>
+  * Code : NVARCHAR(50) <<UNIQUE>>
+  * Name : NVARCHAR(200)
+  * Status : INT
+  * CurrentVersionId : INT <<FK,nullable>>
+}
+
+entity "FormVersions" as FormVersions {
+  * **Id** : INT <<PK>>
+  * FormId : INT <<FK>>
+  * Version : NVARCHAR(20)
+  * Status : INT
+  * ChangeLog : NVARCHAR(1000)
+}
+
+entity "FormFields" as FormFields {
+  * **Id** : INT <<PK>>
+  * FormVersionId : INT <<FK>>
+  * FieldCode : NVARCHAR(50)
+  * FieldType : INT
+  * Label : NVARCHAR(200)
+  * IsRequired : BIT
+  * ParentFieldId : INT <<FK,nullable>>
+}
+
+entity "FieldValidations" as FieldValidations {
+  * **Id** : INT <<PK>>
+  * FieldId : INT <<FK>>
+  * RuleType : INT
+  * RuleValue : NVARCHAR(500)
+  * ErrorMessage : NVARCHAR(500)
+}
+
+entity "FieldConditions" as FieldConditions {
+  * **Id** : INT <<PK>>
+  * FieldId : INT <<FK>>
+  * ConditionType : INT
+  * Expression : NVARCHAR(1000)
+}
+
+entity "FieldOptions" as FieldOptions {
+  * **Id** : INT <<PK>>
+  * FieldId : INT <<FK>>
+  * Value : NVARCHAR(100)
+  * Label : NVARCHAR(200)
+}
+
+entity "FormDataValues" as FormDataValues {
+  * **Id** : INT <<PK>>
+  * SubmissionId : INT <<no FK>>
+  * FormVersionId : INT <<FK>>
+  * FormFieldId : INT <<FK>>
+  * ObjectId : NVARCHAR(100)
+  * ObjectType : NVARCHAR(50)
+  * FieldValue : NVARCHAR(4000)
+}
+
+' ============================================
+' QUAN HỆ
+' ============================================
+Forms ||--o{ FormVersions : "1:N (FormId)"
+Forms }o--|| FormVersions : "1:1 (CurrentVersionId)"
+FormVersions ||--o{ FormFields : "1:N"
+FormVersions ||--o{ FormDataValues : "1:N"
+FormFields ||--o{ FieldValidations : "1:N"
+FormFields ||--o{ FieldConditions : "1:N"
+FormFields ||--o{ FieldOptions : "1:N"
+FormFields ||--o{ FormDataValues : "1:N"
+FormFields }o--o{ FormFields : "Parent-Child"
+
+note right of FormDataValues
+  **SubmissionId**: Tự quản lý
+  Không có Foreign Key
+end note
+
+@enduml

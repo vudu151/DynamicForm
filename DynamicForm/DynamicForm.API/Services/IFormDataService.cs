@@ -9,4 +9,5 @@ public interface IFormDataService
     Task<FormDataDto> CreateFormDataAsync(CreateFormDataRequest request);
     Task<FormDataDto> UpdateFormDataAsync(int submissionId, CreateFormDataRequest request);
     Task<ValidationResultDto> ValidateFormDataAsync(Guid formVersionId, Dictionary<string, object> data);
+    Task<List<FormDataListItemDto>> GetFormDataListAsync(Guid? formVersionPublicId = null, string? objectType = null, string? objectId = null);
 }

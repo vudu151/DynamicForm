@@ -1,0 +1,196 @@
+// Database ERD - DynamicForm System
+// Format: DBML (Database Markup Language)
+// Có thể paste vào: https://dbdiagram.io/
+
+// ============================================
+// BẢNG FORMS
+// ============================================
+Table Forms {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  Code nvarchar(50) [unique, not null, note: 'Unique form code (VD: PHIEU_KHAM_BENH)']
+  Name nvarchar(200) [not null, note: 'Form display name']
+  Description nvarchar(500) [note: 'Form description (nullable)']
+  Status int [not null, default: 0, note: '0=Draft, 1=Active, 2=Inactive']
+  CurrentVersionId int [ref: > FormVersions.Id, note: 'Current active version (nullable)']
+  CreatedDate datetime2 [not null, default: `GETUTCDATE()`]
+  CreatedBy nvarchar(100) [not null, default: '']
+  ModifiedDate datetime2
+  ModifiedBy nvarchar(100)
+  
+  Indexes {
+    PublicId [unique]
+    Code [unique]
+    Status
+  }
+}
+
+// ============================================
+// BẢNG FORMVERSIONS
+// ============================================
+Table FormVersions {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  FormId int [ref: > Forms.Id, note: 'Foreign Key to Forms']
+  Version nvarchar(20) [not null, note: 'Version number (VD: "1", "1.0.0", "2")']
+  Status int [not null, default: 0, note: '0=Draft, 1=Published, 2=Archived']
+  IsActive bit [default: 0, note: 'Deprecated - Use Status instead']
+  CreatedDate datetime2 [not null, default: `GETUTCDATE()`]
+  CreatedBy nvarchar(100) [not null, default: '']
+  PublishedDate datetime2 [note: 'When version was published']
+  PublishedBy nvarchar(100) [note: 'Who published the version']
+  ApprovedDate datetime2 [note: 'Deprecated - Use PublishedDate']
+  ApprovedBy nvarchar(100) [note: 'Deprecated - Use PublishedBy']
+  ChangeLog nvarchar(1000) [note: 'Description of changes in this version']
+  
+  Indexes {
+    PublicId [unique]
+    (FormId, Version) [unique, note: 'Version must be unique within a form']
+    (FormId, Status)
+    Status
+  }
+}
+
+// ============================================
+// BẢNG FORMFIELDS
+// ============================================
+Table FormFields {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  FormVersionId int [ref: > FormVersions.Id, note: 'Foreign Key to FormVersions']
+  FieldCode nvarchar(50) [not null, note: 'Field code (VD: HO_TEN, TUOI, LOAI_MAU)']
+  FieldType int [not null, note: '1=Text, 2=Number, 3=Date, 6=Select, 10=TextArea']
+  Label nvarchar(200) [not null, note: 'Field display label']
+  DisplayOrder int [not null, note: 'Display order (lower = first)']
+  IsRequired bit [not null, default: 0, note: 'Is field required?']
+  IsVisible bit [not null, default: 1, note: 'Is field visible?']
+  DefaultValue nvarchar(500) [note: 'Default value']
+  Placeholder nvarchar(200) [note: 'Placeholder text']
+  HelpText nvarchar(500) [note: 'Help text for users']
+  CssClass nvarchar(200) [note: 'CSS class for styling']
+  PropertiesJson nvarchar(max) [note: 'JSON properties (VD: {"colSpan": 6})']
+  ParentFieldId int [ref: > FormFields.Id, note: 'Parent field for nested/repeat sections (nullable)']
+  MinOccurs int [note: 'Minimum occurrences (for repeat section)']
+  MaxOccurs int [note: 'Maximum occurrences (if > 1 then repeat)']
+  SectionCode nvarchar(50) [note: 'Section code for grouping fields']
+  
+  Indexes {
+    PublicId [unique]
+    (FormVersionId, FieldCode) [unique, note: 'FieldCode must be unique within a version']
+    (FormVersionId, DisplayOrder)
+    ParentFieldId
+  }
+}
+
+// ============================================
+// BẢNG FIELDVALIDATIONS
+// ============================================
+Table FieldValidations {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  FieldId int [ref: > FormFields.Id, note: 'Foreign Key to FormFields']
+  RuleType int [not null, note: '1=Required, 2=Min, 3=Max, 4=Range, 5=Regex, 6=Email']
+  RuleValue nvarchar(500) [note: 'Rule value (VD: "18" for Min, "100" for Max, regex pattern)']
+  ErrorMessage nvarchar(500) [not null, note: 'Error message when validation fails']
+  Priority int [not null, default: 0, note: 'Priority (lower = check first)']
+  IsActive bit [not null, default: 1, note: 'Is rule active?']
+  
+  Indexes {
+    PublicId [unique]
+    FieldId
+  }
+}
+
+// ============================================
+// BẢNG FIELDCONDITIONS
+// ============================================
+Table FieldConditions {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  FieldId int [ref: > FormFields.Id, note: 'Foreign Key to FormFields']
+  ConditionType int [not null, note: '1=Show, 2=Hide, 3=Enable, 4=Disable']
+  Expression nvarchar(1000) [not null, note: 'Condition expression (JSON format)']
+  ActionsJson nvarchar(max) [note: 'Actions JSON when condition is met']
+  Priority int [not null, default: 0, note: 'Priority (lower = higher priority)']
+  
+  Indexes {
+    PublicId [unique]
+    FieldId
+  }
+}
+
+// ============================================
+// BẢNG FIELDOPTIONS
+// ============================================
+Table FieldOptions {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  FieldId int [ref: > FormFields.Id, note: 'Foreign Key to FormFields']
+  Value nvarchar(100) [not null, note: 'Option value (when submitted)']
+  Label nvarchar(200) [not null, note: 'Option display label']
+  DisplayOrder int [not null, note: 'Display order (lower = first)']
+  IsDefault bit [not null, default: 0, note: 'Is default option? (only 1 can be default)']
+  
+  Indexes {
+    PublicId [unique]
+    (FieldId, DisplayOrder)
+  }
+}
+
+// ============================================
+// BẢNG FORMDATAVALUES
+// ============================================
+Table FormDataValues {
+  Id int [pk, increment, note: 'Primary Key - Internal ID']
+  PublicId uniqueidentifier [unique, not null, note: 'Public ID for API (GUID)']
+  SubmissionId int [not null, note: 'NO FK - Self-managed. Groups values of same submission']
+  FormVersionId int [ref: > FormVersions.Id, note: 'Foreign Key to FormVersions']
+  FormFieldId int [ref: > FormFields.Id, note: 'Foreign Key to FormFields']
+  ObjectId nvarchar(100) [not null, note: 'Related object ID (VD: DangKyId, BenhNhanId)']
+  ObjectType nvarchar(50) [not null, note: 'Object type (VD: PHIEU_KHAM, DANG_KY_KHAM)']
+  FieldValue nvarchar(4000) [note: 'Field value (stored as string)']
+  DisplayOrder int [not null, default: 0, note: 'Display order (for repeat sections)']
+  SectionCode nvarchar(50) [note: 'Section code (for repeat sections)']
+  Status int [not null, default: 0, note: '0=Draft, 1=Submitted, 2=Approved']
+  CreatedDate datetime2 [not null, default: `GETUTCDATE()`]
+  CreatedBy nvarchar(100) [not null, default: '']
+  ModifiedDate datetime2
+  ModifiedBy nvarchar(100)
+  
+  Indexes {
+    PublicId [unique]
+    SubmissionId [note: 'Groups values of same submission']
+    (ObjectId, ObjectType, FormVersionId) [note: 'Query by object']
+    FormVersionId
+    FormFieldId
+    (SubmissionId, FormFieldId, DisplayOrder) [note: 'Query and order']
+    CreatedDate
+    Status
+  }
+}
+
+// ============================================
+// QUAN HỆ VÀ GHI CHÚ
+// ============================================
+
+// Quan hệ One-to-Many
+// Forms (1) → FormVersions (N) - qua FormVersions.FormId
+// Forms (1) → FormVersions (1) - qua Forms.CurrentVersionId (optional)
+// FormVersions (1) → FormFields (N) - qua FormFields.FormVersionId
+// FormVersions (1) → FormDataValues (N) - qua FormDataValues.FormVersionId
+// FormFields (1) → FieldValidations (N) - qua FieldValidations.FieldId
+// FormFields (1) → FieldConditions (N) - qua FieldConditions.FieldId
+// FormFields (1) → FieldOptions (N) - qua FieldOptions.FieldId
+// FormFields (1) → FormDataValues (N) - qua FormDataValues.FormFieldId
+// FormFields (1) → FormFields (N) - qua FormFields.ParentFieldId (self-referencing, optional)
+
+// Delete Behaviors:
+// - Cascade: FormVersions → FormFields, FormFields → FieldValidations/Conditions/Options
+// - Restrict: Forms → FormVersions, FormVersions → FormDataValues, FormFields → FormDataValues
+// - SetNull: FormVersions → Forms.CurrentVersionId
+// - NoAction: FormFields → FormFields (ParentFieldId)
+
+// Lưu ý quan trọng:
+// - SubmissionId: KHÔNG có Foreign Key constraint, tự quản lý
+// - CurrentVersionId: Optional (nullable)
+// - ParentFieldId: Optional (nullable), dùng cho nested/repeat sections

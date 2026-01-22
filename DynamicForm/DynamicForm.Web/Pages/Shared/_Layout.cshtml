@@ -1,52 +1,221 @@
+@using System.Text.Json
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
     <title>@ViewData["Title"] - DynamicForm.Web</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Fonts and icons -->
+    <script src="~/assets/js/plugin/webfont/webfont.min.js"></script>
+    <script>
+        WebFont.load({
+            google: { families: ["Public Sans:300,400,500,600,700"] },
+            custom: {
+                families: [
+                    "Font Awesome 5 Solid",
+                    "Font Awesome 5 Regular",
+                    "Font Awesome 5 Brands",
+                    "simple-line-icons",
+                ],
+                urls: ["@Url.Content("~/assets/css/fonts.min.css")"],
+            },
+            active: function () {
+                sessionStorage.fonts = true;
+            },
+        });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="~/assets/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/DynamicForm.Web.styles.css" asp-append-version="true" />
 </head>
+
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">DynamicForm.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Trang chủ</a>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" data-background-color="dark">
+            <div class="sidebar-logo">
+                <!-- Logo Header -->
+                <div class="logo-header" data-background-color="dark">
+                    <a href="/" class="logo">
+                        <span class="navbar-brand text-white fw-bold">DynamicForm</span>
+                    </a>
+                    <div class="nav-toggle">
+                        <button class="btn btn-toggle toggle-sidebar">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <button class="btn btn-toggle sidenav-toggler">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                    <button class="topbar-toggler more">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+                <!-- End Logo Header -->
+            </div>
+            <div class="sidebar-wrapper scrollbar scrollbar-inner">
+                <div class="sidebar-content">
+                    <ul class="nav nav-secondary">
+                        <li
+                            class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active" : "")">
+                            <a href="/">
+                                <i class="fas fa-home"></i>
+                                <p>Trang chủ</p>
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Forms/Index">Danh sách Form</a>
+                        <li
+                            class="nav-item @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Forms") == true ? "active" : "")">
+                            <a data-bs-toggle="collapse" href="#formsMenu" class="collapsed" aria-expanded="false">
+                                <i class="fas fa-pen-square"></i>
+                                <p>Quản lý Form</p>
+                                <span class="caret"></span>
+                            </a>
+                            <div class="collapse @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Forms") == true ? "show" : "")"
+                                id="formsMenu">
+                                <ul class="nav nav-collapse">
+                                    <li>
+                                        <a href="/Forms">
+                                            <span class="sub-item">Danh sách Form</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </li>
                     </ul>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+        </div>
+        <!-- End Sidebar -->
+
+        <div class="main-panel">
+            <div class="main-header">
+                <div class="main-header-logo">
+                    <!-- Logo Header -->
+                    <div class="logo-header" data-background-color="dark">
+                        <a href="/" class="logo">
+                            <span class="navbar-brand text-white fw-bold">DynamicForm</span>
+                        </a>
+                        <div class="nav-toggle">
+                            <button class="btn btn-toggle toggle-sidebar">
+                                <i class="gg-menu-right"></i>
+                            </button>
+                            <button class="btn btn-toggle sidenav-toggler">
+                                <i class="gg-menu-left"></i>
+                            </button>
+                        </div>
+                        <button class="topbar-toggler more">
+                            <i class="gg-more-vertical-alt"></i>
+                        </button>
+                    </div>
+                    <!-- End Logo Header -->
+                </div>
+                <!-- Navbar Header -->
+                <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
+                    <div class="container-fluid">
+                        <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+                            <li class="nav-item topbar-user dropdown hidden-caret">
+                                <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#"
+                                    aria-expanded="false">
+                                    <div class="avatar-sm">
+                                        <span
+                                            class="avatar-img rounded-circle bg-primary text-white d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </div>
+                                    <span class="profile-username">
+                                        <span class="op-7">Hi,</span>
+                                        <span class="fw-bold">VuXuanDu</span>
+                                    </span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-user animated fadeIn">
+                                    <div class="dropdown-user-scroll scrollbar-outer">
+                                        <li>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#">My Profile</a>
+                                            <a class="dropdown-item" href="#">Account Setting</a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#">Logout</a>
+                                        </li>
+                                    </div>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- End Navbar -->
+            </div>
+
+            <div class="container">
+                <div class="page-inner">
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - DynamicForm.Web - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
+    <!-- Core JS Files -->
+    <script src="~/assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="~/assets/js/core/popper.min.js"></script>
+    <script src="~/assets/js/core/bootstrap.min.js"></script>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery Scrollbar -->
+    <script src="~/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+
+    <!-- Datatables -->
+    <script src="~/assets/js/plugin/datatables/datatables.min.js"></script>
+
+    <!-- Sweet Alert -->
+    <script src="~/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+
+    <!-- Kaiadmin JS -->
+    <script src="~/assets/js/kaiadmin.min.js"></script>
+
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- SweetAlert notifications from TempData -->
+    @if (TempData["Success"] != null)
+    {
+        <script>
+            $(document).ready(function () {
+                swal({
+                    title: "Thành công!",
+                    text: @Html.Raw(JsonSerializer.Serialize(TempData["Success"]?.ToString())),
+                    icon: "success",
+                    button: "OK"
+                });
+            });
+        </script>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <script>
+            $(document).ready(function () {
+                var errorText = @Html.Raw(JsonSerializer.Serialize(TempData["Error"]?.ToString()));
+                @if (TempData["ErrorDetails"] != null)
+                    {
+                        <text>
+                            errorText += "\n\nChi tiết:\n" + @Html.Raw(JsonSerializer.Serialize(TempData["ErrorDetails"]?.ToString()));
+                            console.error("Error details:", @Html.Raw(JsonSerializer.Serialize(TempData["ErrorDetails"]?.ToString())));
+                        </text>
+                }
+                    swal({
+                        title: "Lỗi!",
+                        text: errorText,
+                        icon: "error",
+                        button: "OK"
+                    });
+            });
+        </script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

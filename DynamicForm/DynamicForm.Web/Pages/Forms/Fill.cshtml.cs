@@ -27,6 +27,9 @@ public class FillModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Code { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public int? SubmissionId { get; set; }
+
     [BindProperty]
     public Guid FormVersionId { get; set; }
 
@@ -100,12 +103,34 @@ public class FillModel : PageModel
             Metadata = metadata;
             FormVersionId = metadata.Version.Id;
 
-            // Initialize form data with default values
-            foreach (var field in Metadata.Fields.Where(f => f.IsVisible))
+            // Load existing data if SubmissionId is provided
+            if (SubmissionId.HasValue)
             {
-                if (!string.IsNullOrEmpty(field.DefaultValue))
+                try
                 {
-                    FormData[field.FieldCode] = field.DefaultValue;
+                    var existingData = await _apiService.GetAsync<FormDataDto>($"/api/formdata/{SubmissionId.Value}");
+                    if (existingData != null && existingData.Data != null)
+                    {
+                        foreach (var kvp in existingData.Data)
+                        {
+                            FormData[kvp.Key] = kvp.Value?.ToString();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not load existing form data for submission {SubmissionId}", SubmissionId);
+                }
+            }
+            else
+            {
+                // Initialize form data with default values
+                foreach (var field in Metadata.Fields.Where(f => f.IsVisible))
+                {
+                    if (!string.IsNullOrEmpty(field.DefaultValue))
+                    {
+                        FormData[field.FieldCode] = field.DefaultValue;
+                    }
                 }
             }
         }

@@ -1,0 +1,96 @@
+@startuml
+title Quy trình Validate Dữ liệu Form
+
+start
+
+:Nhận dữ liệu form cần validate\n(FormVersionId, Data);
+
+:Lấy metadata của version;
+
+:Load danh sách FormFields;
+
+:Load danh sách FieldValidations\n(sắp xếp theo Priority);
+
+partition "Validate từng Field" {
+  :Duyệt qua từng field trong metadata;
+  
+  :Kiểm tra field có IsRequired = true?;
+  
+  if (Field required?) then (Có)
+    if (Dữ liệu có giá trị?) then (Không)
+      :Thêm lỗi: "Trường này là bắt buộc";
+    else (Có)
+    endif
+  else (Không)
+  endif
+  
+  :Duyệt qua các Validation Rules\ncủa field (theo Priority);
+  
+  partition "Validate Rule" {
+    if (RuleType = Required?) then (Có)
+      if (Giá trị rỗng?) then (Có)
+        :Thêm lỗi với ErrorMessage;
+      else (Không)
+      endif
+    else (Không)
+    endif
+    
+    if (RuleType = Min?) then (Có)
+      if (Giá trị < Min?) then (Có)
+        :Thêm lỗi với ErrorMessage;
+      else (Không)
+      endif
+    else (Không)
+    endif
+    
+    if (RuleType = Max?) then (Có)
+      if (Giá trị > Max?) then (Có)
+        :Thêm lỗi với ErrorMessage;
+      else (Không)
+      endif
+    else (Không)
+    endif
+    
+    if (RuleType = Range?) then (Có)
+      if (Giá trị ngoài Range?) then (Có)
+        :Thêm lỗi với ErrorMessage;
+      else (Không)
+      endif
+    else (Không)
+    endif
+    
+    if (RuleType = Regex?) then (Có)
+      if (Giá trị không match Regex?) then (Có)
+        :Thêm lỗi với ErrorMessage;
+      else (Không)
+      endif
+    else (Không)
+    endif
+  }
+  
+  :Kiểm tra Field Conditions\n(hiển thị có điều kiện);
+  
+  if (Field có điều kiện?) then (Có)
+    :Đánh giá điều kiện;
+    if (Điều kiện thỏa mãn?) then (Có)
+      :Field phải hiển thị;
+      if (Field required nhưng không có giá trị?) then (Có)
+        :Thêm lỗi;
+      else (Không)
+      endif
+    else (Không)
+      :Field không hiển thị\n(bỏ qua validation);
+    endif
+  else (Không)
+  endif
+}
+
+if (Có lỗi validation?) then (Có)
+  :Trả về ValidationResultDto\n(IsValid=false, Errors);
+  stop
+else (Không)
+  :Trả về ValidationResultDto\n(IsValid=true, Errors=[]);
+  stop
+endif
+
+@enduml

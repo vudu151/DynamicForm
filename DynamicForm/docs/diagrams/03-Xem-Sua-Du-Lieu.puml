@@ -1,0 +1,57 @@
+@startuml
+title Quy trình Xem và Sửa Dữ liệu đã lưu
+
+start
+
+:User chọn submission để xem/sửa;
+
+:Web UI gọi API\nGET /api/formdata/{submissionId};
+
+:API lấy dữ liệu theo SubmissionId;
+
+:Query Database:\nSELECT * FROM FormDataValues\nWHERE SubmissionId=;
+
+:Group by FieldCode\nvà tạo Dictionary;
+
+:Trả về FormDataDto;
+
+:Load metadata để render form;
+
+:Hiển thị form với dữ liệu đã điền;
+
+:User sửa đổi dữ liệu;
+
+:User bấm nút "Lưu";
+
+:Web UI gửi request\nPUT /api/formdata/{submissionId};
+
+partition "Validation" {
+  :Validate dữ liệu\n(giống quy trình 2);
+  
+  if (Validation pass?) then (Không)
+    :Trả về lỗi validation;
+    :Hiển thị lỗi cho user sửa;
+    stop
+  else (Có)
+  endif
+}
+
+partition "Cập nhật dữ liệu" {
+  :BEGIN TRANSACTION;
+  
+  :DELETE FormDataValues\nWHERE SubmissionId=;
+  
+  :INSERT FormDataValues\n(dữ liệu mới);
+  
+  :UPDATE ModifiedDate, ModifiedBy;
+  
+  :COMMIT TRANSACTION;
+  
+  :Trả về FormDataDto đã cập nhật;
+  
+  :Hiển thị thông báo cập nhật thành công;
+  
+  stop
+}
+
+@enduml

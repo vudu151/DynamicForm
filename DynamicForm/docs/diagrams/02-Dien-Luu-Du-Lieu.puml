@@ -1,0 +1,36 @@
+@startuml
+title Quy trình Điền và Lưu Dữ liệu Form
+
+start
+
+:User mở form để điền;
+
+:Lấy metadata form\n(version active);
+
+:Render form động từ metadata;
+
+:User điền dữ liệu vào các field;
+
+:User bấm nút "Lưu";
+
+:Validate dữ liệu\n(Required, Min/Max, Regex);
+
+if (Validation pass?) then (Không)
+  :Hiển thị lỗi cho user sửa;
+  stop
+else (Có)
+endif
+
+:Nhập ObjectId và ObjectType\n(VD: DangKyId, PHIEU_KHAM);
+
+:Tạo SubmissionId mới;
+
+:Lưu dữ liệu vào Database\n(FormVersionId, ObjectId, ObjectType, Data);
+
+:Trả về kết quả;
+
+:Hiển thị thông báo thành công;
+
+stop
+
+@enduml
